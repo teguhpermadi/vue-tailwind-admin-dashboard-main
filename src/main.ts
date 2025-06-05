@@ -10,10 +10,12 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
 import VueApexCharts from 'vue3-apexcharts'
-
+import { MotionPlugin } from '@vueuse/motion'
+import motionPresets from '@/motionPresets'
 const app = createApp(App)
 
 app.use(router)
 app.use(VueApexCharts)
+app.use(MotionPlugin, motionPresets)
 
 app.mount('#app')
