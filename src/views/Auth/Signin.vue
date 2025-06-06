@@ -219,11 +219,11 @@
                           Keep me logged in
                         </label>
                       </div>
-                      <router-link
+                      <!-- <router-link
                         to="/reset-password"
                         class="text-sm text-brand-500 hover:text-brand-600 dark:text-brand-400"
                         >Forgot password?</router-link
-                      >
+                      > -->
                     </div>
                     <!-- Button -->
                     <div>
@@ -274,23 +274,34 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { login } from '@/services/authService'
+import { useRouter } from 'vue-router'
 import CommonGridShape from '@/components/common/CommonGridShape.vue'
 import FullScreenLayout from '@/components/layout/FullScreenLayout.vue'
+
 const email = ref('')
 const password = ref('')
+const error = ref<string | null>(null)
 const showPassword = ref(false)
 const keepLoggedIn = ref(false)
+const router = useRouter()
+const loading = ref(false)
 
 const togglePasswordVisibility = () => {
   showPassword.value = !showPassword.value
 }
 
-const handleSubmit = () => {
+const handleSubmit = async () => {
   // Handle form submission
-  console.log('Form submitted', {
-    email: email.value,
-    password: password.value,
-    keepLoggedIn: keepLoggedIn.value,
-  })
+  error.value = null
+  loading.value = true
+  try {
+    const { user } = await login({ email: email.value, password: password.value })
+    router.push('/blank') // Ganti sesuai rute dashboard kamu
+  } catch (err: any) {
+    error.value = 'Login gagal. Email atau password salah.'
+  } finally {
+    loading.value = false
+  }
 }
 </script>
