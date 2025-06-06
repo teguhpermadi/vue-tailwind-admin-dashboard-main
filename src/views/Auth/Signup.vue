@@ -42,6 +42,11 @@
               </p>
             </div>
             <div>
+              <!-- errors -->
+              <div v-if="generalError" class="bg-red-100 text-red-700 p-3 rounded text-sm mb-4">
+                {{ generalError }}
+              </div>
+
               <form @submit.prevent="handleSubmit">
                 <div class="space-y-5">
                   <!-- Name -->
@@ -60,6 +65,9 @@
                       placeholder="Enter your full name"
                       class="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
                     />
+                    <p v-if="errors.name" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                      {{ errors.name[0] }}
+                    </p>
                   </div>
                   <!-- Email -->
                   <div>
@@ -77,6 +85,9 @@
                       placeholder="Enter your email"
                       class="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
                     />
+                    <p v-if="errors.email" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                      {{ errors.email[0] }}
+                    </p>
                   </div>
                   <!-- Password -->
                   <div>
@@ -131,6 +142,9 @@
                           />
                         </svg>
                       </span>
+                      <p v-if="errors.password" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                        {{ errors.password[0] }}
+                      </p>
                     </div>
                   </div>
                   <!-- Password Confirmation -->
@@ -186,6 +200,12 @@
                           />
                         </svg>
                       </span>
+                      <p
+                        v-if="errors.password_confirmation"
+                        class="mt-1 text-sm text-red-600 dark:text-red-400"
+                      >
+                        {{ errors.password_confirmation[0] }}
+                      </p>
                     </div>
                   </div>
                   <!-- Checkbox -->
@@ -240,10 +260,6 @@
                       </label>
                     </div>
                   </div>
-                  <!-- errors -->
-                  <div v-if="error" class="bg-red-100 text-red-700 p-3 rounded text-sm">
-                      {{ error }}
-                    </div>
                   <!-- Button -->
                   <div>
                     <button
@@ -251,7 +267,7 @@
                       :disabled="loading"
                       class="flex items-center justify-center w-full px-4 py-3 text-sm font-medium text-white transition rounded-lg bg-brand-500 shadow-theme-xs hover:bg-brand-600 disabled:opacity-70 disabled:cursor-not-allowed"
                     >
-                      <Spinner v-if="loading"/>
+                      <Spinner v-if="loading" />
                       <span v-if="loading">Loading</span>
                       <span v-else>Sign Up</span>
                     </button>
@@ -311,7 +327,10 @@ const showPasswordConfirmation = ref(false)
 const agreeToTerms = ref(false)
 const router = useRouter()
 const loading = ref(false)
-const error = ref<string | null>(null)
+
+// Ini akan menyimpan error spesifik per field
+const errors = ref<Record<string, string[]>>({}) // Objek untuk menyimpan array pesan error per field
+const generalError = ref<string | null>(null) // Untuk pesan error umum (misal: "Register failed")
 
 const togglePasswordVisibility = () => {
   showPassword.value = !showPassword.value
@@ -322,14 +341,36 @@ const togglePasswordConfirmationVisibility = () => {
 }
 
 const handleSubmit = async () => {
-  // Implement form submission logic here
-  error.value = null
+  // Reset semua error setiap kali form disubmit
+  errors.value = {}
+  generalError.value = null
   loading.value = true
+  // Implement form submission logic here
   try {
-    const { user } = await register({ name: name.value, email: email.value, password: password.value, password_confirmation: passwordConfirmation.value })
+    const { user } = await register({
+      name: name.value,
+      email: email.value,
+      password: password.value,
+      password_confirmation: passwordConfirmation.value,
+    })
     router.push('/signin') // Ganti sesuai rute dashboard kamu
   } catch (err: any) {
-    error.value = 'Register gagal.'
+    // Tangani error dari API
+    if (err.response && err.response.data) {
+      if (err.response.data.errors) {
+        // Ini adalah validation errors dari Laravel (status 422 Unprocessable Entity)
+        errors.value = err.response.data.errors
+        generalError.value = err.response.data.message || 'There are validation errors.' // Pesan umum validasi
+      } else if (err.response.data.message) {
+        // Ini adalah error umum lainnya dari API (misal: "Unauthorized", "Not Found")
+        generalError.value = err.response.data.message
+      } else {
+        generalError.value = 'An unexpected API error occurred.'
+      }
+    } else {
+      // Ini adalah error jaringan atau error lain sebelum mencapai API
+      generalError.value = 'Network error or server unreachable. Please try again.'
+    }
   } finally {
     loading.value = false
   }
