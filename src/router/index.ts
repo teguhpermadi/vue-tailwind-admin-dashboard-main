@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { isAuthenticated } from '../services/authService'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -6,6 +7,33 @@ const router = createRouter({
     return savedPosition || { left: 0, top: 0 }
   },
   routes: [
+    {
+      path: '/signin',
+      name: 'Signin',
+      component: () => import('../views/Auth/Signin.vue'),
+      meta: {
+        title: 'Signin',
+        guestOnly: true,
+      },
+    },
+    {
+      path: '/signup',
+      name: 'Signup',
+      component: () => import('../views/Auth/Signup.vue'),
+      meta: {
+        title: 'Signup',
+        guestOnly: true,
+      },
+    },
+    {
+      path: '/admin/dashboard',
+      name: 'Dashboard',
+      component: () => import('../views/Admin/Dashboard/Dashboard.vue'),
+      meta: {
+        title: 'Dashboard',
+        requiresAuth: true,
+      },
+    },
     {
       path: '/',
       name: 'Ecommerce',
@@ -123,29 +151,30 @@ const router = createRouter({
         title: '404 Error',
       },
     },
-
-    {
-      path: '/signin',
-      name: 'Signin',
-      component: () => import('../views/Auth/Signin.vue'),
-      meta: {
-        title: 'Signin',
-      },
-    },
-    {
-      path: '/signup',
-      name: 'Signup',
-      component: () => import('../views/Auth/Signup.vue'),
-      meta: {
-        title: 'Signup',
-      },
-    },
   ],
 })
 
 export default router
 
 router.beforeEach((to, from, next) => {
+  const requiresAuth = to.meta.requiresAuth;
+  const guestOnly = to.meta.guestOnly;
+  const loggedIn = isAuthenticated(); // Memanggil fungsi untuk memeriksa status login
+
+  if (requiresAuth && !loggedIn) {
+    // Jika rute membutuhkan autentikasi TAPI user belum login,
+    // alihkan ke halaman login.
+    console.log('Redirecting to signin: Requires authentication');
+    next('/signin');
+  } else if (guestOnly && loggedIn) {
+    // Jika rute hanya untuk "guest" (belum login) TAPI user sudah login,
+    // alihkan ke dashboard (atau halaman lain yang sesuai untuk user yang sudah login).
+    console.log('Redirecting to dashboard: Already logged in');
+    next('/admin/dashboard'); // Atau ke '/'
+  } else {
+    // Jika tidak ada kondisi di atas yang terpenuhi,
+    // lanjutkan navigasi.
+    next();
+  }
   document.title = `Vue.js ${to.meta.title} | TailAdmin - Vue.js Tailwind CSS Dashboard Template`
-  next()
 })

@@ -181,6 +181,7 @@ import Spinner from '@/components/common/Spinner.vue'
 
 const email = ref('')
 const password = ref('')
+const deviceName = ref(''); // State untuk device_name
 const showPassword = ref(false)
 const keepLoggedIn = ref(false)
 const router = useRouter()
@@ -201,7 +202,10 @@ const handleSubmit = async () => {
   loading.value = true
   // Handle form submission
   try {
-    const { user } = await login({ email: email.value, password: password.value })
+    // Auto-fill dengan user agent sebagai default (opsional)
+    deviceName.value = `web_app_${navigator.userAgent.substring(0, 20)}`;
+    
+    const { user } = await login({ email: email.value, password: password.value, device_name: deviceName.value })
     router.push('/blank') // Ganti sesuai rute dashboard kamu
   } catch (err: any) {
     // Tangani error dari API
