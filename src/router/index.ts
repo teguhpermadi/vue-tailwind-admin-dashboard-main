@@ -26,11 +26,20 @@ const router = createRouter({
       },
     },
     {
-      path: '/admin/dashboard',
+      path: '/dashboard',
       name: 'Dashboard',
       component: () => import('../views/Admin/Dashboard/Dashboard.vue'),
       meta: {
         title: 'Dashboard',
+        requiresAuth: true,
+      },
+    },
+    {
+      path: '/teacher',
+      name: 'Teacher',
+      component: () => import('../views/Admin/Teacher/TeacherIndex.vue'),
+      meta: {
+        title: 'Teacher',
         requiresAuth: true,
       },
     },
