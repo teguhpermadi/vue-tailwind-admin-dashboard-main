@@ -59,9 +59,13 @@ const getPageButtonClasses = (page: number | string) => {
   const isNumber = typeof page === 'number';
   const isActive = isNumber && props.meta && parseInt(props.meta.current_page) === page;
 
+  // Kelas responsif ditambahkan di sini: hidden pada semua ukuran kecuali sm ke atas, lalu inline-flex
+  const responsiveClasses = 'hidden sm:inline-flex'; 
+
   if (isNumber) {
     return {
       [baseClasses]: true,
+      [responsiveClasses]: true, // Terapkan kelas responsif
       'bg-blue-600 text-white cursor-default': isActive,
       'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300': !isActive,
     };
@@ -69,6 +73,7 @@ const getPageButtonClasses = (page: number | string) => {
     // Untuk '...'
     return {
       [baseClasses]: true,
+      [responsiveClasses]: true, // Terapkan kelas responsif
       'bg-white text-gray-700 cursor-default': true,
     };
   }
