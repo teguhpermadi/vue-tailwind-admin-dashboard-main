@@ -191,6 +191,23 @@ export const deleteTeacher = async (id: string): Promise<void> => {
 };
 
 /**
+ * Menghapus beberapa guru secara bulk (biasanya soft delete di backend Laravel jika menggunakan trait SoftDeletes).
+ * Membutuhkan permission seperti 'delete-teacher' dari backend.
+ *
+ * @param teacherIds Array of IDs (ULID) dari guru yang akan dihapus secara bulk.
+ * @returns Promise<void> jika penghapusan berhasil (backend biasanya mengembalikan 204 No Content).
+ * @throws Error jika ada masalah saat menghapus beberapa guru secara bulk.
+ */
+export const deleteMultipleTeachers = async (teacherIds: string[]): Promise<void> => {
+  try {
+    await api.delete('/teachers/bulk-delete', { data: { ids: teacherIds } });
+  } catch (error: any) {
+    console.error(`Error deleting multiple teachers with IDs ${teacherIds.join(', ')}:`, error.response?.data || error.message);
+    throw error;
+  }
+};
+
+/**
  * Mengembalikan guru yang dihapus secara soft (jika backend menggunakan Soft Deletes).
  * Membutuhkan permission seperti 'restore-teacher' dari backend.
  *

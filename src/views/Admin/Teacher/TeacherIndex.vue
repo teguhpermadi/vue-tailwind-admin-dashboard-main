@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue' // Tambahkan 'computed' di sini
 import {
   fetchTeachers,
   deleteTeacher,
+  deleteMultipleTeachers, // <--- Import fungsi baru ini
   type Teacher,
   type PaginationMeta,
   type PaginationLinks,
@@ -16,7 +17,7 @@ import Spinner from '@/components/common/Spinner.vue'
 import AdminLayout from '@/components/layout/AdminLayout.vue'
 import PageBreadcrumb from '@/components/common/PageBreadcrumb.vue'
 import ButtonComponent from '@/components/ui/ButtonComponent.vue'
-import ButtonGroupComponent from '@/components/ui/ButtonGroupComponent.vue' // Jika Anda akan menggunakan grup
+import ButtonGroupComponent from '@/components/ui/ButtonGroupComponent.vue'
 
 const currentPageTitle = ref('Teacher Management')
 
@@ -42,13 +43,30 @@ const sortDirection = ref<'asc' | 'desc' | ''>('')
 const itemsPerPage = ref(10)
 const perPageOptions = [5, 10, 20, 50, 100]
 
-// --- State untuk Modal Konfirmasi Hapus ---
+// --- State untuk Modal Konfirmasi Hapus Single ---
 const showDeleteConfirmModal = ref(false)
 const teacherToDeleteId = ref<string | null>(null)
 const teacherToDeleteName = ref<string | null>(null) // Untuk menampilkan nama di modal
+const isDeleting = ref(false) // Untuk spinner tombol single delete
 
-// --- New State: Untuk Loading Spinner di Tombol Hapus Modal ---
-const isDeleting = ref(false)
+// --- NEW STATE: Untuk Penghapusan Massal ---
+const selectedTeacherIds = ref<string[]>([]); // Array ID guru yang dipilih dari TableComponent
+const showBulkDeleteConfirmModal = ref(false);
+const isBulkDeleting = ref(false); // Untuk spinner tombol bulk delete
+
+// Computed untuk mengontrol apakah tombol bulk delete aktif
+const canBulkDelete = computed(() => selectedTeacherIds.value.length > 0);
+
+// Computed untuk status "Pilih Semua" di tingkat parent (untuk tombol "Pilih Semua")
+// Mengambil semua ID guru dari halaman saat ini
+const allCurrentPageTeacherIds = computed(() => teachers.value.map(t => t.id).filter(id => id != null));
+
+// Memeriksa apakah semua guru di halaman saat ini sudah terpilih
+const allCurrentPageSelected = computed(() => {
+  if (allCurrentPageTeacherIds.value.length === 0) return false;
+  return allCurrentPageTeacherIds.value.every(id => selectedTeacherIds.value.includes(id));
+});
+
 
 // --- Table Headers Configuration ---
 // Definisikan konfigurasi header tabel di sini
@@ -61,153 +79,215 @@ const tableHeaders = [
 // --- API Fetching Logic ---
 const loadTeachers = async (page: number = 1) => {
   if (!isAuthenticated()) {
-    error.value = 'Anda harus login untuk melihat daftar guru.'
-    teachers.value = []
-    paginationMeta.value = null
-    paginationLinks.value = null
-    return
+    error.value = 'Anda harus login untuk melihat daftar guru.';
+    teachers.value = [];
+    paginationMeta.value = null;
+    paginationLinks.value = null;
+    return;
   }
 
-  isLoading.value = true
-  error.value = null
+  isLoading.value = true;
+  error.value = null;
   try {
-    let sortParam = ''
+    let sortParam = '';
     if (currentSortKey.value) {
-      sortParam = sortDirection.value === 'desc' ? `-${currentSortKey.value}` : currentSortKey.value
+      sortParam = sortDirection.value === 'desc' ? `-${currentSortKey.value}` : currentSortKey.value;
     }
 
-    const response = await fetchTeachers(page, itemsPerPage.value, appliedFilters.value, sortParam)
+    const response = await fetchTeachers(page, itemsPerPage.value, appliedFilters.value, sortParam);
 
     if (response && response.data) {
-      teachers.value = response.data
-      paginationMeta.value = response.meta
-      paginationLinks.value = response.links
-      currentPage.value = parseInt(response.meta.current_page || '1')
+      teachers.value = response.data;
+      paginationMeta.value = response.meta;
+      paginationLinks.value = response.links;
+      currentPage.value = parseInt(response.meta.current_page || '1');
+      // Penting: Setelah memuat data baru, selectedTeacherIds akan secara otomatis disinkronkan oleh TableComponent.
+      // Tidak perlu membersihkan di sini kecuali ada kebutuhan khusus untuk seleksi lintas halaman.
     } else {
-      throw new Error('Format respons API tidak valid.')
+      throw new Error('Format respons API tidak valid.');
     }
   } catch (err: any) {
-    console.error('Error loading teachers:', err)
+    console.error('Error loading teachers:', err);
     if (err.response && err.response.status === 403) {
-      error.value = 'Anda tidak memiliki izin untuk melihat daftar guru.'
+      error.value = 'Anda tidak memiliki izin untuk melihat daftar guru.';
     } else {
-      error.value = err.response?.data?.message || 'Gagal memuat data guru. Silakan coba lagi.'
+      error.value = err.response?.data?.message || 'Gagal memuat data guru. Silakan coba lagi.';
     }
-    teachers.value = []
-    paginationMeta.value = null
-    paginationLinks.value = null
+    teachers.value = [];
+    paginationMeta.value = null;
+    paginationLinks.value = null;
   } finally {
-    isLoading.value = false
+    isLoading.value = false;
   }
-}
+};
 
 // --- Filter Logic ---
-// Dipanggil saat tombol "Terapkan Filter" atau Enter di input filter ditekan
 const handleApplyFilters = () => {
-  // Salin columnFilters ke appliedFilters dan hapus yang kosong
-  const newAppliedFilters: Record<string, string> = {}
+  const newAppliedFilters: Record<string, string> = {};
   for (const key in columnFilters.value) {
     if (columnFilters.value[key]) {
-      newAppliedFilters[key] = columnFilters.value[key]
+      newAppliedFilters[key] = columnFilters.value[key];
     }
   }
 
-  // Hanya muat ulang jika ada perubahan pada filter yang diterapkan
-  // Ini menghindari pemuatan ulang yang tidak perlu jika filter tidak berubah
-  const hasFilterChanged =
-    JSON.stringify(newAppliedFilters) !== JSON.stringify(appliedFilters.value)
+  const hasFilterChanged = JSON.stringify(newAppliedFilters) !== JSON.stringify(appliedFilters.value);
 
   if (hasFilterChanged) {
-    appliedFilters.value = newAppliedFilters
-    currentPage.value = 1 // Reset halaman ke 1 saat filter baru diterapkan
-    loadTeachers(currentPage.value)
+    appliedFilters.value = newAppliedFilters;
+    currentPage.value = 1; // Reset halaman ke 1 saat filter baru diterapkan
+    selectedTeacherIds.value = []; // <--- NEW: Hapus seleksi saat filter berubah
+    loadTeachers(currentPage.value);
   }
-}
+};
 
 // --- Sorting Logic ---
-// Dipanggil saat TableComponent meng-emit 'sort'
 const handleTableSort = (key: string, direction: 'asc' | 'desc' | '') => {
-  currentSortKey.value = key
-  sortDirection.value = direction
-  currentPage.value = 1 // Reset halaman ke 1 saat sorting baru
-  loadTeachers(currentPage.value)
-}
+  currentSortKey.value = key;
+  sortDirection.value = direction;
+  currentPage.value = 1; // Reset halaman ke 1 saat sorting baru
+  selectedTeacherIds.value = []; // <--- NEW: Hapus seleksi saat sorting berubah
+  loadTeachers(currentPage.value);
+};
 
 // --- Pagination Actions ---
-const goToPage = (pageUrl: string | null) => {
+const goToPage = async (pageUrl: string | null) => {
   if (pageUrl) {
-    const url = new URL(pageUrl)
-    const page = parseInt(url.searchParams.get('page') || '1')
-    loadTeachers(page)
+    const url = new URL(pageUrl);
+    const page = parseInt(url.searchParams.get('page') || '1');
+    selectedTeacherIds.value = []; // <--- NEW: Hapus seleksi saat halaman berubah
+    await loadTeachers(page);
   }
-}
+};
 
 // --- CRUD Actions ---
 const handleEdit = (teacherId: string) => {
-  router.push({ name: 'admin.teachers.edit', params: { id: teacherId } })
-}
+  router.push({ name: 'admin.teachers.edit', params: { id: teacherId } });
+};
 
-// --- New: Open Delete Confirmation Modal ---
+// --- SINGLE DELETE LOGIC ---
 const openDeleteConfirmModal = (teacher: Teacher) => {
-  teacherToDeleteId.value = teacher.id
-  teacherToDeleteName.value = teacher.name
-  showDeleteConfirmModal.value = true
-}
+  teacherToDeleteId.value = teacher.id;
+  teacherToDeleteName.value = teacher.name;
+  showDeleteConfirmModal.value = true;
+};
 
-// --- New: Confirm Delete Action (after modal confirmation) ---
 const confirmDelete = async () => {
-  if (!teacherToDeleteId.value) return
+  if (!teacherToDeleteId.value) return;
 
-  // --- Start Loading ---
-  isDeleting.value = true
+  isDeleting.value = true;
   try {
-    await deleteTeacher(teacherToDeleteId.value)
-    const totalTeachersAfterDelete = paginationMeta.value
-      ? parseInt(paginationMeta.value.total) - 1
-      : 0
-    const newCurrentPage =
-      paginationMeta.value &&
-      totalTeachersAfterDelete > 0 &&
-      currentPage.value > 1 &&
-      teachers.value.length === 1
-        ? currentPage.value - 1
-        : currentPage.value
-    await loadTeachers(newCurrentPage)
-    // alert('Guru berhasil dihapus!')
+    await deleteTeacher(teacherToDeleteId.value);
+    const totalTeachersAfterDelete = paginationMeta.value ? parseInt(paginationMeta.value.total) - 1 : 0;
+    const newCurrentPage = (paginationMeta.value && totalTeachersAfterDelete > 0 && currentPage.value > 1 && teachers.value.length === 1)
+      ? currentPage.value - 1
+      : currentPage.value;
+    await loadTeachers(newCurrentPage);
+    alert('Guru berhasil dihapus!');
+    // Setelah single delete, hapus ID tersebut dari selectedTeacherIds jika ada
+    selectedTeacherIds.value = selectedTeacherIds.value.filter(id => id !== teacherToDeleteId.value); // <--- NEW
   } catch (err: any) {
-    console.error('Error deleting teacher:', err)
+    console.error('Error deleting teacher:', err);
     if (err.response && err.response.status === 403) {
-      alert('Anda tidak memiliki izin untuk menghapus guru.')
+      alert('Anda tidak memiliki izin untuk menghapus guru.');
     } else {
-      alert(err.response?.data?.message || 'Gagal menghapus guru.')
+      alert(err.response?.data?.message || 'Gagal menghapus guru.');
     }
   } finally {
-    // --- End Loading and Close Modal ---
-    isDeleting.value = false
-    // Tutup modal setelah operasi selesai
-    showDeleteConfirmModal.value = false
-    teacherToDeleteId.value = null
-    teacherToDeleteName.value = null
+    isDeleting.value = false;
+    showDeleteConfirmModal.value = false;
+    teacherToDeleteId.value = null;
+    teacherToDeleteName.value = null;
   }
-}
+};
 
-// --- New: Cancel Delete Action ---
 const cancelDelete = () => {
-  showDeleteConfirmModal.value = false
-  teacherToDeleteId.value = null
-  teacherToDeleteName.value = null
-}
+  showDeleteConfirmModal.value = false;
+  teacherToDeleteId.value = null;
+  teacherToDeleteName.value = null;
+};
+
+// --- NEW: BULK DELETE LOGIC ---
+// Handler untuk update selectedTeacherIds dari TableComponent
+const handleSelectedItemsChange = (selectedIds: string[]) => {
+  selectedTeacherIds.value = selectedIds;
+};
+
+const selectAllTeachers = () => {
+  // Tambahkan semua ID guru dari halaman saat ini ke selectedTeacherIds
+  const newSelectedIds = [...new Set([...selectedTeacherIds.value, ...allCurrentPageTeacherIds.value])];
+  selectedTeacherIds.value = newSelectedIds;
+};
+
+const deselectAllTeachers = () => {
+  // Hapus semua ID guru dari halaman saat ini dari selectedTeacherIds
+  const newSelectedIds = selectedTeacherIds.value.filter(id => !allCurrentPageTeacherIds.value.includes(id));
+  selectedTeacherIds.value = newSelectedIds;
+};
+
+const openBulkDeleteConfirmModal = () => {
+  showBulkDeleteConfirmModal.value = true;
+};
+
+const confirmBulkDelete = async () => {
+  if (selectedTeacherIds.value.length === 0) return;
+
+  isBulkDeleting.value = true;
+  try {
+    // Kloning array untuk menghindari masalah jika array berubah saat request
+    const idsToDelete = [...selectedTeacherIds.value];
+    await deleteMultipleTeachers(idsToDelete);
+
+    // Perbarui total data dan halaman setelah penghapusan
+    let totalTeachersAfterDelete = paginationMeta.value ? parseInt(paginationMeta.value.total) - idsToDelete.length : 0;
+    let newCurrentPage = currentPage.value;
+
+    // Jika semua item di halaman saat ini dihapus, pindah ke halaman sebelumnya jika ada
+    const currentTeachersOnPage = teachers.value.filter(t => idsToDelete.includes(t.id)).length;
+    if (currentTeachersOnPage === teachers.value.length && newCurrentPage > 1) {
+      newCurrentPage--;
+    } else if (totalTeachersAfterDelete === 0 && newCurrentPage > 1) {
+      newCurrentPage = 1; // Kembali ke halaman 1 jika tidak ada data sama sekali
+    }
+
+    // Kosongkan selection setelah penghapusan berhasil
+    selectedTeacherIds.value = [];
+    await loadTeachers(newCurrentPage); // Muat ulang data
+    alert(`${idsToDelete.length} guru berhasil dihapus!`);
+  } catch (err: any) {
+    console.error('Error bulk deleting teachers:', err);
+    if (err.response && err.response.status === 403) {
+      alert('Anda tidak memiliki izin untuk menghapus guru.');
+    } else {
+      alert(err.response?.data?.message || 'Gagal menghapus guru secara massal.');
+    }
+  } finally {
+    isBulkDeleting.value = false;
+    showBulkDeleteConfirmModal.value = false;
+  }
+};
+
+const cancelBulkDelete = () => {
+  showBulkDeleteConfirmModal.value = false;
+};
+
+// --- NEW: View Subjects (optional, if you want to keep this helper) ---
+const handleViewSubjects = (teacher: Teacher) => {
+  const subjectNames = teacher.subjects?.map(ts => ts.subject?.name).filter(Boolean).join(', ');
+  alert(`Mata pelajaran ${teacher.name}: ${subjectNames || 'Tidak ada'}`);
+};
+
 
 // --- Watcher untuk itemsPerPage ---
 watch(itemsPerPage, () => {
-  currentPage.value = 1
-  loadTeachers(currentPage.value)
-})
+  currentPage.value = 1;
+  selectedTeacherIds.value = []; // <--- NEW: Hapus seleksi saat items per halaman berubah
+  loadTeachers(currentPage.value);
+});
 
 // --- Lifecycle Hook ---
 onMounted(() => {
-  loadTeachers()
-})
+  loadTeachers();
+});
 </script>
 
 <template>
@@ -227,24 +307,20 @@ onMounted(() => {
         <span class="block sm:inline ml-2">{{ error }}</span>
       </div>
 
-      <div class="flex justify-between mb-4">
-        <!-- items per page -->
-        <div class="flex items-center justify-center order-1 sm:order-2">
-          <label
-            for="items-per-page-bottom"
-            class="mr-2 text-sm font-medium text-gray-700 whitespace-nowrap"
-            >Tampilkan:</label
+      <!-- Bulk delete button - hanya tampil jika ada item yang dipilih -->
+      <div 
+        v-if="canBulkDelete" 
+        class="flex flex-col sm:flex-row justify-between items-center mb-6 space-y-4 sm:space-y-0 sm:space-x-4"
+      >
+        <div class="flex items-center space-x-2">
+          <ButtonComponent
+            variant="danger"
+            size="sm"
+            @click="openBulkDeleteConfirmModal"
+            :loading="isBulkDeleting"
           >
-          <select
-            id="items-per-page-bottom"
-            v-model.number="itemsPerPage"
-            class="block w-24 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2.5"
-          >
-            <option v-for="option in perPageOptions" :key="option" :value="option">
-              {{ option }}
-            </option>
-          </select>
-          <span class="ml-2 text-sm text-gray-600 whitespace-nowrap">data per halaman</span>
+            Hapus Terpilih ({{ selectedTeacherIds.length }})
+          </ButtonComponent>
         </div>
       </div>
 
@@ -259,7 +335,8 @@ onMounted(() => {
         :sort-direction="sortDirection"
         @sort="handleTableSort"
         @apply-filters="handleApplyFilters"
-      >
+        :selectedItems="selectedTeacherIds"          
+        @update:selectedItems="handleSelectedItemsChange" >
         <template #actionsHeader>Aksi</template>
 
         <template #cell-gender="{ value }">
@@ -285,10 +362,8 @@ onMounted(() => {
           <div class="flex justify-end space-x-2">
             <ButtonGroupComponent>
               <ButtonComponent variant="warning" @click="handleEdit(item.id)">Edit</ButtonComponent>
-              <ButtonComponent variant="danger" @click="openDeleteConfirmModal(item as Teacher)"
-                >Hapus</ButtonComponent
-              >
-            </ButtonGroupComponent>
+              <ButtonComponent variant="danger" @click="openDeleteConfirmModal(item as Teacher)">Hapus</ButtonComponent>
+              </ButtonGroupComponent>
           </div>
         </template>
       </TableComponent>
@@ -297,7 +372,6 @@ onMounted(() => {
         <TablePagination :meta="paginationMeta" :links="paginationLinks" @go-to-page="goToPage" />
       </div>
 
-      <!-- modal component -->
       <ModalComponent
         v-model="showDeleteConfirmModal"
         title="Konfirmasi Hapus Data"
@@ -309,8 +383,8 @@ onMounted(() => {
       >
         <p>
           Apakah Anda yakin ingin menghapus guru bernama
-          <span class="font-semibold text-red-700">{{ teacherToDeleteName }}</span
-          >? Tindakan ini tidak dapat dibatalkan.
+          <span class="font-semibold text-red-700">{{ teacherToDeleteName }}</span>?
+          Tindakan ini tidak dapat dibatalkan.
         </p>
         <template #actions>
           <ButtonComponent
@@ -326,6 +400,41 @@ onMounted(() => {
           </ButtonComponent>
         </template>
       </ModalComponent>
+
+      <ModalComponent
+        v-model="showBulkDeleteConfirmModal"
+        title="Konfirmasi Hapus Data Terpilih"
+        type="danger"
+        max-width="sm"
+        :show-close-button="!isBulkDeleting"
+        :backdrop-dismiss="!isBulkDeleting"
+        @close="cancelBulkDelete"
+      >
+        <p>
+          Anda akan menghapus
+          <span class="font-semibold text-red-700">{{ selectedTeacherIds.length }}</span>
+          guru yang terpilih. Tindakan ini tidak dapat dibatalkan. Lanjutkan?
+        </p>
+        <template #actions>
+          <ButtonComponent
+            variant="secondary"
+            size="sm"
+            @click="cancelBulkDelete"
+            :disabled="isBulkDeleting"
+          >
+            Batal
+          </ButtonComponent>
+          <ButtonComponent
+            variant="danger"
+            size="sm"
+            @click="confirmBulkDelete"
+            :loading="isBulkDeleting"
+          >
+            Hapus Sekarang
+          </ButtonComponent>
+        </template>
+      </ModalComponent>
+
     </div>
   </AdminLayout>
 </template>
