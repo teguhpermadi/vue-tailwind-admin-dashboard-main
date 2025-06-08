@@ -15,6 +15,8 @@ import ModalComponent from '@/components/ui/ModalComponent.vue'
 import Spinner from '@/components/common/Spinner.vue'
 import AdminLayout from '@/components/layout/AdminLayout.vue'
 import PageBreadcrumb from '@/components/common/PageBreadcrumb.vue'
+import ButtonComponent from '@/components/ui/ButtonComponent.vue'
+import ButtonGroupComponent from '@/components/ui/ButtonGroupComponent.vue' // Jika Anda akan menggunakan grup
 
 const currentPageTitle = ref('Teacher Management')
 
@@ -281,26 +283,18 @@ onMounted(() => {
 
         <template #actions="{ item }">
           <div class="flex justify-end space-x-2">
-            <button
-              @click="handleEdit(item.id)"
-              class="px-3 py-1 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition-colors duration-200 text-sm"
-            >
-              Edit
-            </button>
-            <button
-              @click="openDeleteConfirmModal(item as Teacher)"
-              class="px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors duration-200 text-sm"
-            >
-              Hapus
-            </button>
+            <ButtonGroupComponent>
+              <ButtonComponent variant="warning" @click="handleEdit(item.id)">Edit</ButtonComponent>
+              <ButtonComponent variant="danger" @click="openDeleteConfirmModal(item as Teacher)"
+                >Hapus</ButtonComponent
+              >
+            </ButtonGroupComponent>
           </div>
         </template>
       </TableComponent>
 
-      <div
-        class="mt-8 justify-between items-center"
-      >
-          <TablePagination :meta="paginationMeta" :links="paginationLinks" @go-to-page="goToPage" />
+      <div class="mt-8 justify-between items-center">
+        <TablePagination :meta="paginationMeta" :links="paginationLinks" @go-to-page="goToPage" />
       </div>
 
       <!-- modal component -->
@@ -319,20 +313,17 @@ onMounted(() => {
           >? Tindakan ini tidak dapat dibatalkan.
         </p>
         <template #actions>
-          <button
+          <ButtonComponent
+            variant="secondary"
+            size="sm"
             @click="cancelDelete"
-            class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-colors duration-200"
+            :disabled="isDeleting"
           >
             Batal
-          </button>
-          <button
-            @click="confirmDelete"
-            :disabled="isDeleting"
-            class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors duration-200 relative flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <span v-if="!isDeleting">Hapus</span>
-            <Spinner v-else class="w-5 h-5 text-white" />
-          </button>
+          </ButtonComponent>
+          <ButtonComponent variant="danger" size="sm" @click="confirmDelete" :loading="isDeleting">
+            Hapus
+          </ButtonComponent>
         </template>
       </ModalComponent>
     </div>
