@@ -76,8 +76,8 @@ const getPageButtonClasses = (page: number | string) => {
 </script>
 
 <template>
-  <div v-if="meta && parseInt(meta.total) > 0" class="mt-8 flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
-    <div class="text-sm text-gray-700">
+  <div v-if="meta && parseInt(meta.total) > 0" class="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
+    <div class="text-sm text-gray-700 mr-3">
       Menampilkan {{ meta.from }} hingga {{ meta.to }} dari {{ meta.total }} data
     </div>
 

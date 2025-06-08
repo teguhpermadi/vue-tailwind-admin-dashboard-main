@@ -71,7 +71,6 @@ const getRowClass = (index: number) => ({
 </script>
 
 <template>
-  <div class="p-4 bg-gray-100 rounded-lg shadow-md">
     <div class="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
       <table class="min-w-full divide-y divide-gray-200 table-auto">
         <caption v-if="caption" class="sr-only">{{ caption }}</caption>
@@ -144,5 +143,4 @@ const getRowClass = (index: number) => ({
         </tbody>
       </table>
     </div>
-  </div>
 </template>

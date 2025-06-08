@@ -8,11 +8,15 @@ import {
   type PaginationLinks,
 } from '@/services/teacherService'
 import { isAuthenticated } from '@/services/authService'
-// Import TableComponent dari lokasi yang baru
 import TableComponent from '@/components/tables/TableComponent.vue'
-// Import TablePagination jika Anda ingin menggunakannya juga
 import TablePagination from '@/components/tables/TablePagination.vue'
 import { useRouter } from 'vue-router'
+import ModalComponent from '@/components/ui/ModalComponent.vue'
+import Spinner from '@/components/common/Spinner.vue'
+import AdminLayout from '@/components/layout/AdminLayout.vue'
+import PageBreadcrumb from '@/components/common/PageBreadcrumb.vue'
+
+const currentPageTitle = ref('Teacher Management')
 
 const router = useRouter()
 
@@ -35,6 +39,14 @@ const sortDirection = ref<'asc' | 'desc' | ''>('')
 // State untuk jumlah item per halaman
 const itemsPerPage = ref(10)
 const perPageOptions = [5, 10, 20, 50, 100]
+
+// --- State untuk Modal Konfirmasi Hapus ---
+const showDeleteConfirmModal = ref(false)
+const teacherToDeleteId = ref<string | null>(null)
+const teacherToDeleteName = ref<string | null>(null) // Untuk menampilkan nama di modal
+
+// --- New State: Untuk Loading Spinner di Tombol Hapus Modal ---
+const isDeleting = ref(false)
 
 // --- Table Headers Configuration ---
 // Definisikan konfigurasi header tabel di sini
@@ -133,13 +145,21 @@ const handleEdit = (teacherId: string) => {
   router.push({ name: 'admin.teachers.edit', params: { id: teacherId } })
 }
 
-const handleDelete = async (teacherId: string) => {
-  if (!confirm('Apakah Anda yakin ingin menghapus guru ini?')) {
-    return
-  }
+// --- New: Open Delete Confirmation Modal ---
+const openDeleteConfirmModal = (teacher: Teacher) => {
+  teacherToDeleteId.value = teacher.id
+  teacherToDeleteName.value = teacher.name
+  showDeleteConfirmModal.value = true
+}
 
+// --- New: Confirm Delete Action (after modal confirmation) ---
+const confirmDelete = async () => {
+  if (!teacherToDeleteId.value) return
+
+  // --- Start Loading ---
+  isDeleting.value = true
   try {
-    await deleteTeacher(teacherId)
+    await deleteTeacher(teacherToDeleteId.value)
     const totalTeachersAfterDelete = paginationMeta.value
       ? parseInt(paginationMeta.value.total) - 1
       : 0
@@ -151,7 +171,7 @@ const handleDelete = async (teacherId: string) => {
         ? currentPage.value - 1
         : currentPage.value
     await loadTeachers(newCurrentPage)
-    alert('Guru berhasil dihapus!')
+    // alert('Guru berhasil dihapus!')
   } catch (err: any) {
     console.error('Error deleting teacher:', err)
     if (err.response && err.response.status === 403) {
@@ -159,15 +179,21 @@ const handleDelete = async (teacherId: string) => {
     } else {
       alert(err.response?.data?.message || 'Gagal menghapus guru.')
     }
+  } finally {
+    // --- End Loading and Close Modal ---
+    isDeleting.value = false
+    // Tutup modal setelah operasi selesai
+    showDeleteConfirmModal.value = false
+    teacherToDeleteId.value = null
+    teacherToDeleteName.value = null
   }
 }
 
-const handleViewSubjects = (teacher: Teacher) => {
-  const subjectNames = teacher.subjects
-    ?.map((ts) => ts.subject?.name)
-    .filter(Boolean)
-    .join(', ')
-  alert(`Mata pelajaran ${teacher.name}: ${subjectNames || 'Tidak ada'}`)
+// --- New: Cancel Delete Action ---
+const cancelDelete = () => {
+  showDeleteConfirmModal.value = false
+  teacherToDeleteId.value = null
+  teacherToDeleteName.value = null
 }
 
 // --- Watcher untuk itemsPerPage ---
@@ -183,107 +209,132 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="teacher-index-page p-6 bg-gray-50 min-h-screen">
-    <h1 class="text-3xl font-bold text-gray-800 mb-6">Manajemen Guru</h1>
-
+  <AdminLayout>
+    <PageBreadcrumb :pageTitle="currentPageTitle" />
     <div
-      v-if="error"
-      class="error-message bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
-      role="alert"
+      class="min-h-screen rounded-2xl border border-gray-200 bg-white px-5 py-7 dark:border-gray-800 dark:bg-white/[0.03] xl:px-10 xl:py-12"
     >
-      <strong class="font-bold">Error!</strong>
-      <span class="block sm:inline ml-2">{{ error }}</span>
-    </div>
+      <h1 class="text-3xl font-bold text-gray-800 mb-6">Manajemen Guru</h1>
 
-    <TableComponent
-      :headers="tableHeaders"
-      :items="teachers"
-      :is-loading="isLoading"
-      :items-per-page="itemsPerPage"
-      :empty-message="'Tidak ada guru yang ditemukan.'"
-      v-model:modelValueFilters="columnFilters"
-      :current-sort-key="currentSortKey"
-      :sort-direction="sortDirection"
-      @sort="handleTableSort"
-      @apply-filters="handleApplyFilters"
-    >
-      <template #actionsHeader>Aksi</template>
-
-      <template #cell-gender="{ value }">
-        <span
-          :class="{
-            'px-2 inline-flex text-xs leading-5 font-semibold rounded-full': true,
-            'bg-blue-100 text-blue-800': value === 'male',
-            'bg-pink-100 text-pink-800': value === 'female',
-          }"
-        >
-          {{ value }}
-        </span>
-      </template>
-
-      <template #cell-subject_count="{ item }">
-        <span v-if="(item as Teacher).subject_count">
-          {{ parseInt((item as Teacher).subject_count) }} Mapel
-        </span>
-        <span v-else class="text-gray-500 italic"> 0 Mapel </span>
-      </template>
-
-      <template #actions="{ item }">
-        <div class="flex justify-end space-x-2">
-          <button
-            @click="handleEdit(item.id)"
-            class="px-3 py-1 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition-colors duration-200 text-sm"
-          >
-            Edit
-          </button>
-          <button
-            @click="handleDelete(item.id)"
-            class="px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors duration-200 text-sm"
-          >
-            Hapus
-          </button>
-          <button
-            @click="handleViewSubjects(item as Teacher)"
-            class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors duration-200 text-sm"
-          >
-            Mapel
-          </button>
-        </div>
-      </template>
-    </TableComponent>
-
-    <div class="mt-8 flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
       <div
-        v-if="paginationMeta && parseInt(paginationMeta.total) > 0"
-        class="text-sm text-gray-700 order-2 sm:order-1"
+        v-if="error"
+        class="error-message bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
+        role="alert"
       >
-        Total: {{ paginationMeta.total }} data
-      </div>
-      <div v-else-if="!isLoading" class="text-sm text-gray-700 order-2 sm:order-1">
-        Total: 0 data
+        <strong class="font-bold">Error!</strong>
+        <span class="block sm:inline ml-2">{{ error }}</span>
       </div>
 
-      <div class="flex items-center justify-center order-1 sm:order-2">
-        <label
-          for="items-per-page-bottom"
-          class="mr-2 text-sm font-medium text-gray-700 whitespace-nowrap"
-          >Tampilkan:</label
-        >
-        <select
-          id="items-per-page-bottom"
-          v-model.number="itemsPerPage"
-          class="block w-24 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2.5"
-        >
-          <option v-for="option in perPageOptions" :key="option" :value="option">
-            {{ option }}
-          </option>
-        </select>
-        <span class="ml-2 text-sm text-gray-600 whitespace-nowrap">data per halaman</span>
+      <div class="flex justify-between mb-4">
+        <!-- items per page -->
+        <div class="flex items-center justify-center order-1 sm:order-2">
+          <label
+            for="items-per-page-bottom"
+            class="mr-2 text-sm font-medium text-gray-700 whitespace-nowrap"
+            >Tampilkan:</label
+          >
+          <select
+            id="items-per-page-bottom"
+            v-model.number="itemsPerPage"
+            class="block w-24 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2.5"
+          >
+            <option v-for="option in perPageOptions" :key="option" :value="option">
+              {{ option }}
+            </option>
+          </select>
+          <span class="ml-2 text-sm text-gray-600 whitespace-nowrap">data per halaman</span>
+        </div>
       </div>
 
-      <div class="order-3 w-full sm:w-auto flex justify-center">
-        <TablePagination :meta="paginationMeta" :links="paginationLinks" @go-to-page="goToPage" />
+      <TableComponent
+        :headers="tableHeaders"
+        :items="teachers"
+        :is-loading="isLoading"
+        :items-per-page="itemsPerPage"
+        :empty-message="'Tidak ada guru yang ditemukan.'"
+        v-model:modelValueFilters="columnFilters"
+        :current-sort-key="currentSortKey"
+        :sort-direction="sortDirection"
+        @sort="handleTableSort"
+        @apply-filters="handleApplyFilters"
+      >
+        <template #actionsHeader>Aksi</template>
+
+        <template #cell-gender="{ value }">
+          <span
+            :class="{
+              'px-2 inline-flex text-xs leading-5 font-semibold rounded-full': true,
+              'bg-blue-100 text-blue-800': value === 'male',
+              'bg-pink-100 text-pink-800': value === 'female',
+            }"
+          >
+            {{ value }}
+          </span>
+        </template>
+
+        <template #cell-subject_count="{ item }">
+          <span v-if="(item as Teacher).subject_count">
+            {{ parseInt((item as Teacher).subject_count) }} Mapel
+          </span>
+          <span v-else class="text-gray-500 italic"> 0 Mapel </span>
+        </template>
+
+        <template #actions="{ item }">
+          <div class="flex justify-end space-x-2">
+            <button
+              @click="handleEdit(item.id)"
+              class="px-3 py-1 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition-colors duration-200 text-sm"
+            >
+              Edit
+            </button>
+            <button
+              @click="openDeleteConfirmModal(item as Teacher)"
+              class="px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors duration-200 text-sm"
+            >
+              Hapus
+            </button>
+          </div>
+        </template>
+      </TableComponent>
+
+      <div
+        class="mt-8 justify-between items-center"
+      >
+          <TablePagination :meta="paginationMeta" :links="paginationLinks" @go-to-page="goToPage" />
       </div>
+
+      <!-- modal component -->
+      <ModalComponent
+        v-model="showDeleteConfirmModal"
+        title="Konfirmasi Hapus Data"
+        type="danger"
+        max-width="sm"
+        :show-close-button="true"
+        :backdrop-dismiss="true"
+        @close="cancelDelete"
+      >
+        <p>
+          Apakah Anda yakin ingin menghapus guru bernama
+          <span class="font-semibold text-red-700">{{ teacherToDeleteName }}</span
+          >? Tindakan ini tidak dapat dibatalkan.
+        </p>
+        <template #actions>
+          <button
+            @click="cancelDelete"
+            class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-colors duration-200"
+          >
+            Batal
+          </button>
+          <button
+            @click="confirmDelete"
+            :disabled="isDeleting"
+            class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors duration-200 relative flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <span v-if="!isDeleting">Hapus</span>
+            <Spinner v-else class="w-5 h-5 text-white" />
+          </button>
+        </template>
+      </ModalComponent>
     </div>
-  </div>
+  </AdminLayout>
 </template>
