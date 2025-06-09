@@ -44,10 +44,15 @@ const router = createRouter({
       },
     },
     {
-      path: '/teachers/create', // Rute baru untuk membuat guru
-      name: 'teachers.create',
+      path: '/teacher/create', // Rute baru untuk membuat guru
+      name: 'teacher.create',
       component: () => import('../views/Admin/Teacher/TeacherCreate.vue'),
       meta: { requiresAuth: true },
+    },
+    {
+      path: '/teacher/:id/edit',
+      name: 'teacher.edit',
+      component: () => import('../views/Admin/Teacher/TeacherEdit.vue'),
     },
     {
       path: '/',

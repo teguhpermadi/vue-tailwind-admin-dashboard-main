@@ -163,7 +163,7 @@ const goToPage = async (pageUrl: string | null) => {
 
 // --- CRUD Actions ---
 const handleEdit = (teacherId: string) => {
-  router.push({ name: 'admin.teachers.edit', params: { id: teacherId } })
+  router.push({ name: 'teacher.edit', params: { id: teacherId } })
 }
 
 // --- SINGLE DELETE LOGIC ---
@@ -296,7 +296,7 @@ const handleViewSubjects = (teacher: Teacher) => {
 }
 
 const handleCreateTeacher = () => {
-  router.push({ name: 'teachers.create' });
+  router.push({ name: 'teacher.create' });
 };
 
 // --- Watcher untuk itemsPerPage ---
