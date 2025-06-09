@@ -12,8 +12,12 @@ import router from './router'
 import VueApexCharts from 'vue3-apexcharts'
 import { MotionPlugin } from '@vueuse/motion'
 import motionPresets from '@/motionPresets'
-const app = createApp(App)
+import { createPinia } from 'pinia'; // Import createPinia
 
+const app = createApp(App)
+const pinia = createPinia(); // Buat instance Pinia
+
+app.use(pinia); // Daftarkan Pinia
 app.use(router)
 app.use(VueApexCharts)
 app.use(MotionPlugin, motionPresets)

@@ -18,10 +18,12 @@ import AdminLayout from '@/components/layout/AdminLayout.vue'
 import PageBreadcrumb from '@/components/common/PageBreadcrumb.vue'
 import ButtonComponent from '@/components/ui/ButtonComponent.vue'
 import ButtonGroupComponent from '@/components/ui/ButtonGroupComponent.vue'
+import { useAuthStore } from '@/stores/authStore'; 
 
 const currentPageTitle = ref('Teacher Management')
 
 const router = useRouter()
+const authStore = useAuthStore();
 
 // --- State Variables ---
 const teachers = ref<Teacher[]>([])
@@ -332,7 +334,7 @@ onMounted(() => {
           <div v-if="canBulkDelete"
             class="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0 sm:space-x-4">
             <div class="flex items-center space-x-2">
-              <ButtonComponent variant="danger" size="sm" @click="openBulkDeleteConfirmModal" :loading="isBulkDeleting">
+              <ButtonComponent v-if="authStore.can('delete-teacher')" variant="danger" size="sm" @click="openBulkDeleteConfirmModal" :loading="isBulkDeleting">
                 Hapus Terpilih ({{ selectedTeacherIds.length }})
               </ButtonComponent>
             </div>
@@ -340,7 +342,7 @@ onMounted(() => {
         </div>
 
         <div class="flex items-center space-x-2 w-full sm:w-auto justify-end">
-          <ButtonComponent variant="primary" size="md" @click="handleCreateTeacher">
+          <ButtonComponent v-if="authStore.can('create-teacher')" variant="primary" size="md" @click="handleCreateTeacher">
             Tambah Guru
           </ButtonComponent>
         </div>
@@ -373,8 +375,8 @@ onMounted(() => {
         <template #actions="{ item }">
           <div class="flex justify-end space-x-2">
             <ButtonGroupComponent>
-              <ButtonComponent variant="warning" @click="handleEdit(item.id)">Edit</ButtonComponent>
-              <ButtonComponent variant="danger" @click="openDeleteConfirmModal(item as Teacher)">Hapus</ButtonComponent>
+              <ButtonComponent v-if="authStore.can('update-teacher')" variant="warning" @click="handleEdit(item.id)">Edit</ButtonComponent>
+              <ButtonComponent v-if="authStore.can('delete-teacher')" variant="danger" @click="openDeleteConfirmModal(item as Teacher)">Hapus</ButtonComponent>
             </ButtonGroupComponent>
           </div>
         </template>

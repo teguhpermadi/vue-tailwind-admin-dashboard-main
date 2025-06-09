@@ -8,10 +8,12 @@ import InputField from '@/components/forms/InputField.vue';
 import SelectInput from '@/components/forms/SelectInput.vue';
 import ButtonComponent from '@/components/ui/ButtonComponent.vue';
 import { ArrowPathIcon, CheckIcon } from '@heroicons/vue/24/solid'; // Menggunakan Heroicons
+import { useAuthStore } from '@/stores/authStore'; 
 
 const currentPageTitle = ref('Edit Data Guru');
 const route = useRoute(); // Untuk mengambil ID dari URL
 const router = useRouter(); // Untuk navigasi
+const authStore = useAuthStore();
 
 // State untuk menyimpan data guru yang akan diedit
 const teacherData = ref<Partial<Teacher>>({
@@ -205,6 +207,7 @@ onMounted(() => {
             Batal
           </ButtonComponent>
           <ButtonComponent
+            v-if="authStore.can('update-teacher')"
             variant="primary"
             size="md"
             type="submit"

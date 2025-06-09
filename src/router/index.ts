@@ -47,12 +47,19 @@ const router = createRouter({
       path: '/teacher/create', // Rute baru untuk membuat guru
       name: 'teacher.create',
       component: () => import('../views/Admin/Teacher/TeacherCreate.vue'),
-      meta: { requiresAuth: true },
+      meta: { 
+        title: 'Create Teacher',
+        requiresAuth: true
+       },
     },
     {
       path: '/teacher/:id/edit',
       name: 'teacher.edit',
       component: () => import('../views/Admin/Teacher/TeacherEdit.vue'),
+      meta: {
+        title: 'Edit Teacher',
+        requiresAuth: true
+      }
     },
     {
       path: '/',
@@ -190,7 +197,7 @@ router.beforeEach((to, from, next) => {
     // Jika rute hanya untuk "guest" (belum login) TAPI user sudah login,
     // alihkan ke dashboard (atau halaman lain yang sesuai untuk user yang sudah login).
     console.log('Redirecting to dashboard: Already logged in');
-    next('/admin/dashboard'); // Atau ke '/'
+    next('/'); // Atau ke '/'
   } else {
     // Jika tidak ada kondisi di atas yang terpenuhi,
     // lanjutkan navigasi.

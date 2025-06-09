@@ -87,7 +87,7 @@ const closeDropdown = () => {
 const signOut = () => {
   // Implement sign out logic here
   logout()
-  router.push('/signin')
+  // router.push('/signin')
   console.log('Signing out...')
   closeDropdown()
 }

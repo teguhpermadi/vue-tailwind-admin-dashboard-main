@@ -178,14 +178,17 @@ import CommonGridShape from '@/components/common/CommonGridShape.vue'
 import InputField from '@/components/forms/InputField.vue' // Import komponen baru
 import FullScreenLayout from '@/components/layout/FullScreenLayout.vue'
 import Spinner from '@/components/common/Spinner.vue'
+import { generateUniqueDeviceName } from '@/utils/auth'; // <--- IMPORT INI
+import { useAuthStore } from '@/stores/authStore' // Pastikan Anda mengimpor authStore
 
 const email = ref('')
 const password = ref('')
-const deviceName = ref(''); // State untuk device_name
+// const deviceName = ref(''); // State untuk device_name
 const showPassword = ref(false)
 const keepLoggedIn = ref(false)
 const router = useRouter()
 const loading = ref(false)
+const authStore = useAuthStore() // Inisialisasi authStore
 
 // Ini akan menyimpan error spesifik per field
 const errors = ref<Record<string, string[]>>({}) // Objek untuk menyimpan array pesan error per field
@@ -202,10 +205,14 @@ const handleSubmit = async () => {
   loading.value = true
   // Handle form submission
   try {
-    // Auto-fill dengan user agent sebagai default (opsional)
-    deviceName.value = `web_app_${navigator.userAgent.substring(0, 20)}`;
+    // Panggil fungsi untuk menghasilkan device_name yang unik
+    const deviceName = generateUniqueDeviceName(); // <--- PENGGUNAAN UTILITY
     
-    const { user } = await login({ email: email.value, password: password.value, device_name: deviceName.value })
+    const { user, token } = await login({ email: email.value, password: password.value, device_name: deviceName })
+
+    // Simpan user data dan token ke Pinia store
+    authStore.setUser(user, token);
+
     router.push('/blank') // Ganti sesuai rute dashboard kamu
   } catch (err: any) {
     // Tangani error dari API
