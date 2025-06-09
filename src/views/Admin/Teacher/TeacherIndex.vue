@@ -296,7 +296,7 @@ const handleViewSubjects = (teacher: Teacher) => {
 }
 
 const handleCreateTeacher = () => {
-  router.push({ name: 'admin.teachers.create' });
+  router.push({ name: 'teachers.create' });
 };
 
 // --- Watcher untuk itemsPerPage ---

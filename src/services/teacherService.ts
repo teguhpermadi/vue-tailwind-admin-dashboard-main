@@ -35,10 +35,7 @@ export interface TeacherSubject {
 export interface Teacher {
   id: string;
   name: string;
-  email: string;
   gender: string;
-  phone_number?: string;
-  address?: string;
   subject_count: string;
   subjects: TeacherSubject[];
   created_at: string;

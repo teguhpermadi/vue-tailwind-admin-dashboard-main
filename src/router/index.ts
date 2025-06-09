@@ -36,12 +36,18 @@ const router = createRouter({
     },
     {
       path: '/teacher',
-      name: 'Teacher',
+      name: 'teacher.index',
       component: () => import('../views/Admin/Teacher/TeacherIndex.vue'),
       meta: {
         title: 'Teacher',
         requiresAuth: true,
       },
+    },
+    {
+      path: '/teachers/create', // Rute baru untuk membuat guru
+      name: 'teachers.create',
+      component: () => import('../views/Admin/Teacher/TeacherCreate.vue'),
+      meta: { requiresAuth: true },
     },
     {
       path: '/',
