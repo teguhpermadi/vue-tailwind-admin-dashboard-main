@@ -9,11 +9,13 @@ import SelectInput from '@/components/forms/SelectInput.vue';
 import ButtonComponent from '@/components/ui/ButtonComponent.vue';
 import { ArrowPathIcon, CheckIcon } from '@heroicons/vue/24/solid'; // Menggunakan Heroicons
 import { useAuthStore } from '@/stores/authStore'; 
+import { useToast } from 'vue-toastification'; // <--- IMPORT INI
 
 const currentPageTitle = ref('Edit Data Guru');
 const route = useRoute(); // Untuk mengambil ID dari URL
 const router = useRouter(); // Untuk navigasi
 const authStore = useAuthStore();
+const toast = useToast();
 
 // State untuk menyimpan data guru yang akan diedit
 const teacherData = ref<Partial<Teacher>>({
@@ -42,6 +44,7 @@ watch(
       fetchTeacher(); // Ambil data guru lagi jika ID berubah
     } else {
       generalError.value = 'ID guru tidak ditemukan di URL.';
+      toast.error('ID guru tidak ditemukan di URL.'); // <--- PENGGUNAAN TOAST ERROR
     }
   }
 );
@@ -64,13 +67,16 @@ const fetchTeacher = async () => {
       currentPageTitle.value = `Edit: ${response.data.name}`; // Update judul halaman
     } else {
       generalError.value = 'ID guru tidak ditemukan.';
+      toast.error('ID guru tidak ditemukan.'); // <--- PENGGUNAAN TOAST ERROR
     }
   } catch (err: any) {
     console.error('Error fetching teacher:', err);
     if (err.response && err.response.data && err.response.data.message) {
       generalError.value = err.response.data.message;
+      toast.error(err.response.data.message); // <--- PENGGUNAAN TOAST ERROR
     } else {
       generalError.value = 'Gagal mengambil data guru. Silakan coba lagi.';
+      toast.error('Gagal mengambil data guru. Silakan coba lagi.'); // <--- PENGGUNAAN TOAST ERROR
     }
     // Jika guru tidak ditemukan atau error lain, mungkin redirect ke halaman daftar guru
     // router.push({ name: 'admin.teachers.index' });
@@ -89,6 +95,7 @@ const handleSubmit = async () => {
   try {
     if (!teacherId.value) {
       generalError.value = 'ID guru tidak valid untuk pembaruan.';
+      toast.error('ID guru tidak valid untuk pembaruan.'); // <--- PENGGUNAAN TOAST ERROR
       return;
     }
 
@@ -100,6 +107,8 @@ const handleSubmit = async () => {
     };
 
     await updateTeacher(teacherId.value as string, payload);
+    toast.success('Data guru berhasil diperbarui!'); // <--- PENGGUNAAN TOAST SUKSES
+
     successMessage.value = 'Data guru berhasil diperbarui!';
 
     // Opsional: Redirect kembali ke daftar guru setelah sukses
@@ -109,10 +118,13 @@ const handleSubmit = async () => {
     if (err.response && err.response.status === 422) {
       validationErrors.value = err.response.data.errors || {};
       generalError.value = err.response.data.message || 'Ada kesalahan validasi. Silakan periksa input Anda.';
+      toast.error(err.response.data.message || 'Ada kesalahan validasi. Silakan periksa input Anda.'); // <--- PENGGUNAAN TOAST ERROR
     } else if (err.response && err.response.data && err.response.data.message) {
       generalError.value = err.response.data.message;
+      toast.error(err.response.data.message); // <--- PENGGUNAAN TOAST ERROR
     } else {
       generalError.value = 'Gagal memperbarui guru. Silakan coba lagi.';
+      toast.error('Gagal memperbarui guru. Silakan coba lagi.'); // <--- PENGGUNAAN TOAST ERROR
     }
   } finally {
     isSaving.value = false;
@@ -130,6 +142,7 @@ onMounted(() => {
     fetchTeacher();
   } else {
     generalError.value = 'ID guru tidak ditemukan di URL.';
+    toast.error('ID guru tidak ditemukan di URL.'); // <--- PENGGUNAAN TOAST ERROR
   }
 });
 </script>

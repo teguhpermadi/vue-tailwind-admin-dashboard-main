@@ -8,9 +8,11 @@ import InputField from '@/components/forms/InputField.vue'; // Komponen InputFie
 import SelectInput from '@/components/forms/SelectInput.vue'; // Komponen SelectInput yang baru
 import ButtonComponent from '@/components/ui/ButtonComponent.vue';
 import { PlusIcon } from '@heroicons/vue/24/solid'; // Menggunakan Heroicons
+import { useToast } from 'vue-toastification'; // <--- IMPORT INI
 
 const currentPageTitle = ref('Tambah Guru Baru');
 const router = useRouter();
+const toast = useToast(); // <--- INISIALISASI TOAST
 
 // State untuk menyimpan data guru baru yang akan diinput
 const newTeacher = ref<Partial<Teacher>>({
@@ -43,15 +45,17 @@ const handleSubmit = async () => {
 
     // Panggil service untuk membuat guru baru
     await createTeacher(payload);
+    // Tampilkan toast sukses
+    toast.success('Guru berhasil ditambahkan!'); // <--- PENGGUNAAN TOAST SUKSES
 
     // Jika sukses
     successMessage.value = 'Guru berhasil ditambahkan!';
     // Opsional: Reset form setelah sukses
     newTeacher.value = { name: '', gender: 'male' };
     // Opsional: Redirect ke halaman daftar guru setelah beberapa saat
-    // setTimeout(() => {
-    //   router.push({ name: 'admin.teachers.index' });
-    // }, 2000);
+    setTimeout(() => {
+      router.push({ name: 'teacher.index' });
+    }, 2000);
 
   } catch (err: any) {
     // Tangani error dari API
@@ -63,12 +67,15 @@ const handleSubmit = async () => {
       // Pastikan err.response.data.errors adalah objek yang berisi array string
       validationErrors.value = err.response.data.errors || {};
       generalError.value = err.response.data.message || 'Ada kesalahan validasi. Silakan periksa input Anda.';
+      toast.error(err.response.data.message || 'Ada kesalahan validasi. Silakan periksa input Anda.'); // <--- PENGGUNAAN TOAST ERROR
     } else if (err.response && err.response.data && err.response.data.message) {
       // Jika ada pesan error lain dari API (misal: "Unauthorized", "Not Found")
       generalError.value = err.response.data.message;
+      toast.error(err.response.data.message); // <--- PENGGUNAAN TOAST ERROR
     } else {
       // Error generik (misal: masalah jaringan)
       generalError.value = 'Gagal menambahkan guru. Silakan coba lagi.';
+      toast.error('Gagal menambahkan guru. Silakan coba lagi.'); // <--- PENGGUNAAN TOAST ERROR
     }
   } finally {
     isLoading.value = false; // Matikan status loading
