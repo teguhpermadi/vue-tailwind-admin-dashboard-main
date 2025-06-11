@@ -22,22 +22,22 @@ const motionPresets: MotionPluginOptions = {
     },
 
     // Slide dari kiri
-    'slide-left': {
-      initial: { opacity: 0, x: -50 },
-      visible: {
-        opacity: 1, x: 0,
-        transition: { duration: 0.5 },
-      },
-    },
+    // 'slide-left': {
+    //   initial: { opacity: 0, x: -50 },
+    //   visible: {
+    //     opacity: 1, x: 0,
+    //     transition: { duration: 0.5 },
+    //   },
+    // },
 
     // Slide dari kanan
-    'slide-right': {
-      initial: { opacity: 0, x: 50 },
-      visible: {
-        opacity: 1, x: 0,
-        transition: { duration: 0.5 },
-      },
-    },
+    // 'slide-right': {
+    //   initial: { opacity: 0, x: 50 },
+    //   visible: {
+    //     opacity: 1, x: 0,
+    //     transition: { duration: 0.5 },
+    //   },
+    // },
 
     // Slide dari atas
     'slide-down': {

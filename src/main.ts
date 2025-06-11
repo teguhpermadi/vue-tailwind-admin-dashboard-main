@@ -13,11 +13,16 @@ import VueApexCharts from 'vue3-apexcharts'
 import { MotionPlugin } from '@vueuse/motion'
 import motionPresets from '@/motionPresets'
 import { createPinia } from 'pinia'; // Import createPinia
+import { createI18n } from 'vue-i18n'; // Import createI18n
 
 // Import Vue Toastification
 import Toast, { type PluginOptions } from 'vue-toastification';
 // Import the CSS or your custom CSS (jika Anda memiliki CSS custom untuk toast)
 import 'vue-toastification/dist/index.css'; // <--- Import CSS bawaan
+
+// Impor pesan bahasa Anda
+import en from './locales/en.json'; // Bahasa Inggris
+import id from './locales/id.json'; // Bahasa Indonesia
 
 const app = createApp(App)
 const pinia = createPinia(); // Buat instance Pinia
@@ -44,10 +49,22 @@ const toastOptions: PluginOptions = {
   newestOnTop: true, // Toast terbaru di 
 };
 
+// Konfigurasi Vue I18n
+const i18n = createI18n({
+  legacy: false, // Gunakan Composition API
+  locale: 'id',  // Atur bahasa default
+  fallbackLocale: 'en', // Bahasa cadangan jika string tidak ditemukan
+  messages: {
+    en, // Tambahkan pesan bahasa Inggris
+    id  // Tambahkan pesan bahasa Indonesia
+  },
+  globalInjection: true, // Membuat $t tersedia di template tanpa import
+});
+
 app.use(Toast, toastOptions); // Daftarkan plugin dengan options
 app.use(pinia); // Daftarkan Pinia
 app.use(router)
 app.use(VueApexCharts)
 app.use(MotionPlugin, motionPresets)
-
+app.use(i18n)
 app.mount('#app')

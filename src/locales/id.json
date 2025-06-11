@@ -1,0 +1,56 @@
+{
+  "common": {
+    "save": "Simpan",
+    "cancel": "Batal",
+    "create": "Buat Baru",
+    "edit": "Ubah",
+    "delete": "Hapus",
+    "bulk_delete": "Hapus banyak data",
+    "bulk_delete_confirmation": "Apakah Anda yakin ingin menghapus data-data ini?",
+    "loading": "Memuat...",
+    "no_data": "Tidak ada data yang tersedia.",
+    "actions": "Aksi",
+    "add": "Tambah",
+    "update": "Perbarui",
+    "close": "Tutup",
+    "confirm": "Konfirmasi",
+    "you_must_login": "Anda harus login terlebih dahulu.",
+    "api_not_valid": "API tidak valid.",
+    "api_failed": "API gagal.",
+    "api_success": "API sukses.",
+    "api_not_found": "API tidak ditemukan.",
+    "name": "Nama",
+    "gender": "Jenis Kelamin",
+    "male": "Laki-laki",
+    "female": "Perempuan"
+  },
+  "teacher": {
+    "management": "Manajemen Guru",
+    "create": "Tambah Guru Baru",
+    "edit": "Edit Data Guru",
+    "name": "Nama Guru",
+    "gender": "Jenis Kelamin",
+    "subject_count": "Jumlah Mata Pelajaran",
+    "created_success": "Guru berhasil ditambahkan!",
+    "updated_success": "Data guru berhasil diperbarui!",
+    "deleted_success": "Guru berhasil dihapus!",
+    "not_found": "Guru tidak ditemukan.",
+    "name_placeholder": "Masukkan nama guru",
+    "gender_placeholder": "Pilih Jenis Kelamin",
+    "error_backend": "Terjadi kesalahan pada sisi server.",
+    "delete_confirmation": "Anda yakin ingin menghapus {name}? Tindakan ini tidak dapat dibatalkan. Lanjutkan?",
+    "delete_bulk_confirmation": "Anda akan menghapus {count} yang terpilih. Tindakan ini tidak dapat dibatalkan. Lanjutkan?",
+    "permission_to_create": "Anda tidak memiliki izin untuk membuat guru baru.",
+    "permission_to_edit": "Anda tidak memiliki izin untuk mengedit data guru ini.",
+    "permission_to_delete": "Anda tidak memiliki izin untuk menghapus data guru ini.",
+    "permission_to_view": "Anda tidak memiliki izin untuk melihat data guru ini."
+  },
+  "validation": {
+    "required": "{field} wajib diisi.",
+    "min_length": "{field} harus memiliki minimal {min} karakter.",
+    "invalid_gender": "Jenis kelamin tidak valid."
+  },
+  "error": {
+    "general_validation_error": "Ada kesalahan validasi. Silakan periksa input Anda."
+  }
+}

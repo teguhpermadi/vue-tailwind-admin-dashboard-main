@@ -18,12 +18,18 @@ import AdminLayout from '@/components/layout/AdminLayout.vue'
 import PageBreadcrumb from '@/components/common/PageBreadcrumb.vue'
 import ButtonComponent from '@/components/ui/ButtonComponent.vue'
 import ButtonGroupComponent from '@/components/ui/ButtonGroupComponent.vue'
-import { useAuthStore } from '@/stores/authStore'; 
+import { useAuthStore } from '@/stores/authStore'
+import { useToast } from 'vue-toastification';
 
-const currentPageTitle = ref('Teacher Management')
+// Impor useI18n
+import { useI18n } from 'vue-i18n'
+// Inisialisasi useI18n
+const { t } = useI18n()
+
+const currentPageTitle = ref(t('teacher.management'))
 
 const router = useRouter()
-const authStore = useAuthStore();
+const authStore = useAuthStore()
 
 // --- State Variables ---
 const teachers = ref<Teacher[]>([])
@@ -32,6 +38,7 @@ const paginationLinks = ref<PaginationLinks | null>(null)
 const currentPage = ref(1)
 const isLoading = ref(false)
 const error = ref<string | null>(null)
+const toast = useToast();
 
 // State untuk filter per kolom - akan diikat ke TableComponent menggunakan v-model
 const columnFilters = ref<Record<string, string>>({})
@@ -74,15 +81,15 @@ const allCurrentPageSelected = computed(() => {
 // --- Table Headers Configuration ---
 // Definisikan konfigurasi header tabel di sini
 const tableHeaders = [
-  { key: 'name', label: 'Nama Guru', sortable: true, filterable: true },
-  { key: 'gender', label: 'Jenis Kelamin', sortable: true, filterable: true },
-  { key: 'subject_count', label: 'Jumlah Mapel', sortable: false, filterable: false },
+  { key: 'name', label: t('teacher.name'), sortable: true, filterable: true },
+  { key: 'gender', label: t('teacher.gender'), sortable: true, filterable: true },
+  // { key: 'subject_count', label: t('teacher.subject_count'), sortable: false, filterable: false },
 ]
 
 // --- API Fetching Logic ---
 const loadTeachers = async (page: number = 1) => {
   if (!isAuthenticated()) {
-    error.value = 'Anda harus login untuk melihat daftar guru.'
+    error.value = t('common.you_must_login')
     teachers.value = []
     paginationMeta.value = null
     paginationLinks.value = null
@@ -107,14 +114,14 @@ const loadTeachers = async (page: number = 1) => {
       // Penting: Setelah memuat data baru, selectedTeacherIds akan secara otomatis disinkronkan oleh TableComponent.
       // Tidak perlu membersihkan di sini kecuali ada kebutuhan khusus untuk seleksi lintas halaman.
     } else {
-      throw new Error('Format respons API tidak valid.')
+      throw new Error(t('common.api_not_valid'))
     }
   } catch (err: any) {
-    console.error('Error loading teachers:', err)
+    // console.error('Error loading teachers:', err)
     if (err.response && err.response.status === 403) {
-      error.value = 'Anda tidak memiliki izin untuk melihat daftar guru.'
+      error.value = t('common.you_must_login')
     } else {
-      error.value = err.response?.data?.message || 'Gagal memuat data guru. Silakan coba lagi.'
+      error.value = err.response?.data?.message || t('common.api_failed')
     }
     teachers.value = []
     paginationMeta.value = null
@@ -192,17 +199,18 @@ const confirmDelete = async () => {
         ? currentPage.value - 1
         : currentPage.value
     await loadTeachers(newCurrentPage)
+    toast.success(t('teacher.deleted_success'))
     // alert('Guru berhasil dihapus!')
     // Setelah single delete, hapus ID tersebut dari selectedTeacherIds jika ada
     selectedTeacherIds.value = selectedTeacherIds.value.filter(
       (id) => id !== teacherToDeleteId.value,
     ) // <--- NEW
   } catch (err: any) {
-    console.error('Error deleting teacher:', err)
+    // console.error('Error deleting teacher:', err)
     if (err.response && err.response.status === 403) {
-      alert('Anda tidak memiliki izin untuk menghapus guru.')
+      alert(t('teacher.permission_to_delete'))
     } else {
-      alert(err.response?.data?.message || 'Gagal menghapus guru.')
+      alert(err.response?.data?.message || t('common.api_failed'))
     }
   } finally {
     isDeleting.value = false
@@ -270,13 +278,14 @@ const confirmBulkDelete = async () => {
     // Kosongkan selection setelah penghapusan berhasil
     selectedTeacherIds.value = []
     await loadTeachers(newCurrentPage) // Muat ulang data
-    alert(`${idsToDelete.length} guru berhasil dihapus!`)
+    toast.success(t('teacher.deleted_success'))
+    // alert(`${idsToDelete.length} guru berhasil dihapus!`)
   } catch (err: any) {
-    console.error('Error bulk deleting teachers:', err)
+    // console.error('Error bulk deleting teachers:', err)
     if (err.response && err.response.status === 403) {
-      alert('Anda tidak memiliki izin untuk menghapus guru.')
+      alert(t('teacher.permission_to_delete'))
     } else {
-      alert(err.response?.data?.message || 'Gagal menghapus guru secara massal.')
+      alert(err.response?.data?.message || t('teacher.permission_to_delete'))
     }
   } finally {
     isBulkDeleting.value = false
@@ -288,18 +297,9 @@ const cancelBulkDelete = () => {
   showBulkDeleteConfirmModal.value = false
 }
 
-// --- NEW: View Subjects (optional, if you want to keep this helper) ---
-const handleViewSubjects = (teacher: Teacher) => {
-  const subjectNames = teacher.subjects
-    ?.map((ts) => ts.subject?.name)
-    .filter(Boolean)
-    .join(', ')
-  alert(`Mata pelajaran ${teacher.name}: ${subjectNames || 'Tidak ada'}`)
-}
-
 const handleCreateTeacher = () => {
-  router.push({ name: 'teacher.create' });
-};
+  router.push({ name: 'teacher.create' })
+}
 
 // --- Watcher untuk itemsPerPage ---
 watch(itemsPerPage, () => {
@@ -318,65 +318,104 @@ onMounted(() => {
   <AdminLayout>
     <PageBreadcrumb :pageTitle="currentPageTitle" />
     <div
-      class="min-h-screen rounded-2xl border border-gray-200 bg-white px-5 py-7 dark:border-gray-800 dark:bg-white/[0.03] xl:px-10 xl:py-12">
-      <h1 class="text-3xl font-bold text-gray-800 mb-6">Manajemen Guru</h1>
+      class="min-h-screen rounded-2xl border border-gray-200 bg-white px-5 py-7 dark:border-gray-800 dark:bg-white/[0.03] xl:px-10 xl:py-12"
+    >
+      <h1 class="text-3xl font-bold text-gray-800 mb-6">{{ t('teacher.management') }}</h1>
 
-      <div v-if="error"
+      <div
+        v-if="error"
         class="error-message bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
-        role="alert">
+        role="alert"
+      >
         <strong class="font-bold">Error!</strong>
         <span class="block sm:inline ml-2">{{ error }}</span>
       </div>
 
-      <div class="flex flex-col sm:flex-row justify-between items-center mb-6 space-y-4 sm:space-y-0">
+      <div
+        class="flex flex-col sm:flex-row justify-between items-center mb-6 space-y-4 sm:space-y-0"
+      >
         <div class="flex items-center space-x-2 w-full sm:w-auto justify-start">
           <!-- Bulk delete button - hanya tampil jika ada item yang dipilih -->
-          <div v-if="canBulkDelete"
-            class="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0 sm:space-x-4">
+          <div
+            v-if="canBulkDelete"
+            class="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0 sm:space-x-4"
+          >
             <div class="flex items-center space-x-2">
-              <ButtonComponent v-if="authStore.can('delete-teacher')" variant="danger" size="sm" @click="openBulkDeleteConfirmModal" :loading="isBulkDeleting">
-                Hapus Terpilih ({{ selectedTeacherIds.length }})
+              <ButtonComponent
+                v-if="authStore.can('delete-teacher')"
+                variant="danger"
+                size="sm"
+                @click="openBulkDeleteConfirmModal"
+                :loading="isBulkDeleting"
+              >
+                {{ t('common.bulk_delete') }} ({{ selectedTeacherIds.length }})
               </ButtonComponent>
             </div>
           </div>
         </div>
 
         <div class="flex items-center space-x-2 w-full sm:w-auto justify-end">
-          <ButtonComponent v-if="authStore.can('create-teacher')" variant="primary" size="md" @click="handleCreateTeacher">
-            Tambah Guru
+          <ButtonComponent
+            v-if="authStore.can('create-teacher')"
+            variant="primary"
+            size="md"
+            @click="handleCreateTeacher"
+          >
+            {{ t('common.create') }}
           </ButtonComponent>
         </div>
       </div>
 
-      <TableComponent :headers="tableHeaders" :items="teachers" :is-loading="isLoading" :items-per-page="itemsPerPage"
-        :empty-message="'Tidak ada guru yang ditemukan.'" v-model:modelValueFilters="columnFilters"
-        :current-sort-key="currentSortKey" :sort-direction="sortDirection" @sort="handleTableSort"
-        @apply-filters="handleApplyFilters" :selectedItems="selectedTeacherIds"
-        @update:selectedItems="handleSelectedItemsChange">
-        <template #actionsHeader>Aksi</template>
+      <TableComponent
+        :headers="tableHeaders"
+        :items="teachers"
+        :is-loading="isLoading"
+        :items-per-page="itemsPerPage"
+        :empty-message="t('teacher.not_found')"
+        v-model:modelValueFilters="columnFilters"
+        :current-sort-key="currentSortKey"
+        :sort-direction="sortDirection"
+        @sort="handleTableSort"
+        @apply-filters="handleApplyFilters"
+        :selectedItems="selectedTeacherIds"
+        @update:selectedItems="handleSelectedItemsChange"
+      >
+        <template #actionsHeader>{{ t('common.actions') }}</template>
 
         <template #cell-gender="{ value }">
-          <span :class="{
+          <span
+            :class="{
               'px-2 inline-flex text-xs leading-5 font-semibold rounded-full': true,
-              'bg-blue-100 text-blue-800': value === 'male',
-              'bg-pink-100 text-pink-800': value === 'female',
-            }">
+              'bg-blue-100 text-blue-800': value === t('common.male'),
+              'bg-pink-100 text-pink-800': value === t('common.female'),
+            }"
+          >
             {{ value }}
           </span>
         </template>
 
-        <template #cell-subject_count="{ item }">
+        <!-- <template #cell-subject_count="{ item }">
           <span v-if="(item as Teacher).subject_count">
             {{ parseInt((item as Teacher).subject_count) }} Mapel
           </span>
           <span v-else class="text-gray-500 italic"> 0 Mapel </span>
-        </template>
+        </template> -->
 
         <template #actions="{ item }">
           <div class="flex justify-end space-x-2">
             <ButtonGroupComponent>
-              <ButtonComponent v-if="authStore.can('update-teacher')" variant="warning" @click="handleEdit(item.id)">Edit</ButtonComponent>
-              <ButtonComponent v-if="authStore.can('delete-teacher')" variant="danger" @click="openDeleteConfirmModal(item as Teacher)">Hapus</ButtonComponent>
+              <ButtonComponent
+                v-if="authStore.can('update-teacher')"
+                variant="warning"
+                @click="handleEdit(item.id)"
+                >{{ t('common.edit') }}</ButtonComponent
+              >
+              <ButtonComponent
+                v-if="authStore.can('delete-teacher')"
+                variant="danger"
+                @click="openDeleteConfirmModal(item as Teacher)"
+                >{{ t('common.delete') }}</ButtonComponent
+              >
             </ButtonGroupComponent>
           </div>
         </template>
@@ -386,38 +425,69 @@ onMounted(() => {
         <TablePagination :meta="paginationMeta" :links="paginationLinks" @go-to-page="goToPage" />
       </div>
 
-      <ModalComponent v-model="showDeleteConfirmModal" title="Konfirmasi Hapus Data" type="danger" max-width="sm"
-        :show-close-button="true" :backdrop-dismiss="true" @close="cancelDelete">
+      <ModalComponent
+        v-model="showDeleteConfirmModal"
+        title="Konfirmasi Hapus Data"
+        type="danger"
+        max-width="sm"
+        :show-close-button="true"
+        :backdrop-dismiss="true"
+        @close="cancelDelete"
+      >
         <p>
-          Apakah Anda yakin ingin menghapus guru bernama
-          <span class="font-semibold text-red-700">{{ teacherToDeleteName }}</span>? Tindakan ini tidak dapat
-          dibatalkan.
+          <i18n-t keypath="teacher.delete_confirmation" tag="span">
+            <template v-slot:name>
+              <span class="font-semibold text-red-700">{{ teacherToDeleteName }}</span>
+            </template>
+          </i18n-t>
         </p>
         <template #actions>
-          <ButtonComponent variant="secondary" size="sm" @click="cancelDelete" :disabled="isDeleting">
-            <span class="i-heroicons-x-circle-solid w-5 h-5 mr-2"></span>
-            Batal
+          <ButtonComponent
+            variant="secondary"
+            size="sm"
+            @click="cancelDelete"
+            :disabled="isDeleting"
+          >
+            {{ t('common.cancel') }}
           </ButtonComponent>
           <ButtonComponent variant="danger" size="sm" @click="confirmDelete" :loading="isDeleting">
-            Hapus
+            {{ t('common.delete') }}
           </ButtonComponent>
         </template>
       </ModalComponent>
 
-      <ModalComponent v-model="showBulkDeleteConfirmModal" title="Konfirmasi Hapus Data Terpilih" type="danger"
-        max-width="sm" :show-close-button="!isBulkDeleting" :backdrop-dismiss="!isBulkDeleting"
-        @close="cancelBulkDelete">
+      <ModalComponent
+        v-model="showBulkDeleteConfirmModal"
+        title="Konfirmasi Hapus Data Terpilih"
+        type="danger"
+        max-width="sm"
+        :show-close-button="!isBulkDeleting"
+        :backdrop-dismiss="!isBulkDeleting"
+        @close="cancelBulkDelete"
+      >
         <p>
-          Anda akan menghapus
-          <span class="font-semibold text-red-700">{{ selectedTeacherIds.length }}</span>
-          guru yang terpilih. Tindakan ini tidak dapat dibatalkan. Lanjutkan?
+          <i18n-t keypath="teacher.delete_bulk_confirmation" tag="span">
+            <template v-slot:count>
+              <span class="font-semibold text-red-700">{{ selectedTeacherIds.length }}</span>
+            </template>
+          </i18n-t>
         </p>
         <template #actions>
-          <ButtonComponent variant="secondary" size="sm" @click="cancelBulkDelete" :disabled="isBulkDeleting">
-            Batal
+          <ButtonComponent
+            variant="secondary"
+            size="sm"
+            @click="cancelBulkDelete"
+            :disabled="isBulkDeleting"
+          >
+            {{ t('common.cancel') }}
           </ButtonComponent>
-          <ButtonComponent variant="danger" size="sm" @click="confirmBulkDelete" :loading="isBulkDeleting">
-            Hapus Sekarang
+          <ButtonComponent
+            variant="danger"
+            size="sm"
+            @click="confirmBulkDelete"
+            :loading="isBulkDeleting"
+          >
+            {{ t('common.delete') }}
           </ButtonComponent>
         </template>
       </ModalComponent>

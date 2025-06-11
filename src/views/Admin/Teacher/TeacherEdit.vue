@@ -17,7 +17,12 @@ import { toTypedSchema } from '@vee-validate/zod';
 // Import skema Zod dan tipe yang diinferensikan
 import { teacherSchema, type TeacherFormValues } from '@/schemas/teacherSchema'; // Pastikan path ini benar
 
-const currentPageTitle = ref('Edit Data Guru');
+// Impor useI18n
+import { useI18n } from 'vue-i18n'
+// Inisialisasi useI18n
+const { t } = useI18n()
+
+const currentPageTitle = ref(t('teacher.edit'))
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
@@ -35,7 +40,7 @@ const {
   isSubmitting,   // Boolean reaktif untuk status submit (pengganti isSaving)
   setValues       // Fungsi untuk mengisi nilai form
 } = useForm<TeacherFormValues>({
-  validationSchema: toTypedSchema(teacherSchema), // Menggunakan skema Zod untuk validasi
+  validationSchema: toTypedSchema(teacherSchema()), // Menggunakan skema Zod untuk validasi
   // initialValues bisa diatur di sini, tapi setValues akan menimpanya setelah data diambil.
   // Misalnya, Anda bisa mengatur default 'male' jika gender bisa kosong dari API.
   initialValues: {
@@ -63,7 +68,7 @@ watch(
     if (newId) {
       fetchTeacher(); // Ambil data guru lagi jika ID berubah
     } else {
-      toast.error('ID guru tidak ditemukan di URL.');
+      toast.error(t('teacher.not_found'));
     }
   }
 );
@@ -83,17 +88,17 @@ const fetchTeacher = async () => {
       });
       currentPageTitle.value = `Edit: ${response.data.name}`;
     } else {
-      toast.error('ID guru tidak ditemukan.');
+      toast.error(t('teacher.not_found'));
     }
   } catch (err: any) {
-    console.error('Error fetching teacher:', err);
+    // console.error('Error fetching teacher:', err);
     if (err.response && err.response.data && err.response.data.message) {
       toast.error(err.response.data.message);
     } else {
-      toast.error('Gagal mengambil data guru. Silakan coba lagi.');
+      toast.error(t('teacher.error_backend'));
     }
     // Jika guru tidak ditemukan atau error lain, mungkin redirect ke halaman daftar guru
-    router.push({ name: 'admin.teachers.index' }); // Sesuaikan dengan nama rute Anda
+    router.push({ name: 'teacher.index' }); // Sesuaikan dengan nama rute Anda
   } finally {
     isLoadingData.value = false;
   }
@@ -105,27 +110,27 @@ const fetchTeacher = async () => {
 const onSubmit = handleSubmit(async (values) => {
   try {
     if (!teacherId.value) {
-      toast.error('ID guru tidak valid untuk pembaruan.');
+      toast.error(t('teacher.not_found'));
       return;
     }
 
     // `values` sudah divalidasi dan tipenya sesuai `TeacherFormValues` dari Zod
     await updateTeacher(teacherId.value as string, values);
-    toast.success('Data guru berhasil diperbarui!');
+    toast.success(t('teacher.updated_success'));
 
     // Opsional: Redirect kembali ke daftar guru setelah sukses
     router.push({ name: 'teacher.index' });
   } catch (err: any) {
-    console.error('Error updating teacher:', err);
+    // console.error('Error updating teacher:', err);
     if (err.response && err.response.status === 422) {
       // Jika error adalah error validasi dari backend (HTTP 422)
       // Assign error backend ke objek `errors` VeeValidate
       errors.value = err.response.data.errors || {};
-      toast.error(err.response.data.message || 'Ada kesalahan validasi dari server. Silakan periksa input Anda.');
+      toast.error(err.response.data.message || t('teacher.error_backend'));
     } else if (err.response && err.response.data && err.response.data.message) {
       toast.error(err.response.data.message);
     } else {
-      toast.error('Gagal memperbarui guru. Silakan coba lagi.');
+      toast.error(t('teacher.error_backend'));
     }
   }
   // `isSubmitting` dari VeeValidate otomatis akan menjadi `false` setelah try/catch selesai
@@ -141,7 +146,7 @@ onMounted(() => {
   if (teacherId.value) {
     fetchTeacher();
   } else {
-    toast.error('ID guru tidak ditemukan di URL saat mount.');
+    toast.error(t('teacher.not_found'));
     router.push({ name: 'teacher.index' }); // Redirect jika ID tidak ada
   }
 });
@@ -162,31 +167,31 @@ onMounted(() => {
         class="flex items-center justify-center h-48 text-gray-500 dark:text-gray-400"
       >
         <ArrowPathIcon class="animate-spin h-8 w-8 mr-3" />
-        Memuat data guru...
+        {{ t('common.loading') }}
       </div>
 
       <form v-if="!isLoadingData && teacherId" @submit="onSubmit"> <div class="space-y-6">
           <InputField
-            id="teacherName"
-            label="Nama Guru"
+          id="teacherName"
+            :label="t('teacher.name')"
             type="text"
             v-model="name"          
             v-bind="nameAttrs"       
-            placeholder="Masukkan nama guru"
+            :placeholder="t('teacher.name_placeholder')"
             :errors="errors.name ? [errors.name] : []"    
             required
           />
 
           <SelectInput
-            id="teacherGender"
-            label="Jenis Kelamin"
+          id="teacherGender"
+            :label="t('teacher.gender')"
             v-model="gender"        
             v-bind="genderAttrs"     
             :options="[
-              { value: 'male', label: 'Laki-laki' },
-              { value: 'female', label: 'Perempuan' },
+              { value: 'male', label: t('common.male') },
+              { value: 'female', label: t('common.female') },
             ]"
-            placeholder="Pilih jenis kelamin"
+            :placeholder="t('teacher.gender_placeholder')"
             :error="errors.gender ? [errors.gender] : []"
             required
           />
@@ -198,7 +203,7 @@ onMounted(() => {
             size="md"
             @click="goBack"
             :disabled="isSubmitting" >
-            Batal
+            {{ t('common.cancel') }}
           </ButtonComponent>
           <ButtonComponent
             v-if="authStore.can('update-teacher')"
@@ -207,12 +212,12 @@ onMounted(() => {
             type="submit"
             :loading="isSubmitting" >
             <CheckIcon v-if="!isSubmitting" class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
-            Simpan Perubahan
+            {{ t('common.save') }}
           </ButtonComponent>
         </div>
       </form>
       <div v-else-if="!isLoadingData && !teacherId" class="text-center py-10 text-gray-500 dark:text-gray-400">
-          Data guru tidak ditemukan atau terjadi masalah saat memuat.
+          {{ t('teacher.not_found') }}
       </div>
     </div>
   </AdminLayout>

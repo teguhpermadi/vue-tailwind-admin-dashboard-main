@@ -17,7 +17,13 @@ import { toTypedSchema } from '@vee-validate/zod';
 // Import skema Zod yang sudah kita buat
 import { teacherSchema, type TeacherFormValues } from '@/schemas/teacherSchema';
 
-const currentPageTitle = ref('Tambah Guru Baru');
+// Impor useI18n
+import { useI18n } from 'vue-i18n'
+
+// Inisialisasi useI18n
+const { t } = useI18n()
+
+const currentPageTitle = ref(t('teacher.create'));
 const router = useRouter();
 const toast = useToast();
 
@@ -30,7 +36,7 @@ const {
   isSubmitting,   // Boolean reaktif untuk status submit (true saat form sedang diproses)
   resetForm       // Fungsi untuk mereset form ke nilai awal atau membersihkan error
 } = useForm<TeacherFormValues>({
-  validationSchema: toTypedSchema(teacherSchema), // Menggunakan skema Zod untuk validasi
+  validationSchema: toTypedSchema(teacherSchema()), // Menggunakan skema Zod untuk validasi
   initialValues: { // Atur nilai awal form. Penting untuk SelectInput agar default 'male' terpilih.
     name: '',
     gender: 'male',
@@ -52,7 +58,7 @@ const onSubmit = handleSubmit(async (values) => {
     await createTeacher(values);
 
     // Tampilkan notifikasi sukses menggunakan toast
-    toast.success('Guru berhasil ditambahkan!');
+    toast.success(t('teacher.created_success'));
 
     // Reset form setelah sukses (mengatur ulang nilai dan membersihkan pesan error)
     resetForm();
@@ -64,20 +70,20 @@ const onSubmit = handleSubmit(async (values) => {
 
   } catch (err: any) {
     // Tangani error yang berasal dari API backend
-    console.error('Error creating teacher:', err);
+    // console.error('Error creating teacher:', err);
 
     if (err.response && err.response.status === 422) {
       // Jika error adalah error validasi dari backend (HTTP status 422)
       // Assign error backend ke objek `errors` VeeValidate agar pesan muncul di bawah input yang relevan.
       // Pastikan format error dari backend sesuai yang diharapkan VeeValidate: { fieldName: ['Pesan error'] }
       errors.value = err.response.data.errors || {};
-      toast.error(err.response.data.message || 'Ada kesalahan validasi dari server. Silakan periksa input Anda.');
+      toast.error(err.response.data.message || t('teacher.error_backend'));
     } else if (err.response && err.response.data && err.response.data.message) {
       // Jika ada pesan error lain dari API (misal: otorisasi, server error)
       toast.error(err.response.data.message);
     } else {
       // Tangani error generik (misal: masalah jaringan atau server tidak merespons)
-      toast.error('Gagal menambahkan guru. Silakan coba lagi.');
+      toast.error(t('teacher.error_backend'));
     }
   }
   // `isSubmitting` dari VeeValidate secara otomatis akan menjadi `false` setelah try/catch selesai
@@ -100,25 +106,25 @@ const goBack = () => {
       <form @submit="onSubmit"> <div class="space-y-6">
           <InputField
             id="teacherName"
-            label="Nama Guru"
+            :label="t('teacher.name')"
             type="text"
             v-model="name"          
             v-bind="nameAttrs"       
-            placeholder="Masukkan nama guru"
+            :placeholder="t('teacher.name_placeholder')"
             :errors="errors.name ? [errors.name] : []"    
             required
           />
 
           <SelectInput
             id="teacherGender"
-            label="Jenis Kelamin"
+            :label="t('teacher.gender')"
             v-model="gender"        
             v-bind="genderAttrs"     
             :options="[
-              { value: 'male', label: 'Laki-laki' },
-              { value: 'female', label: 'Perempuan' },
+              { value: 'male', label: t('common.male') },
+              { value: 'female', label: t('common.female') },
             ]"
-            placeholder="Pilih jenis kelamin"
+            :placeholder="t('teacher.gender_placeholder')"
             :error="errors.gender ? [errors.gender] : []"
             required
           />
@@ -130,7 +136,7 @@ const goBack = () => {
             size="md"
             @click="goBack"
             :disabled="isSubmitting" >
-            Batal
+            {{ t('common.cancel') }}
           </ButtonComponent>
           <ButtonComponent
             variant="primary"
@@ -138,7 +144,7 @@ const goBack = () => {
             type="submit"
             :loading="isSubmitting" >
             <PlusIcon v-if="!isSubmitting" class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
-            Simpan Guru
+            {{ t('common.save') }}
           </ButtonComponent>
         </div>
       </form>

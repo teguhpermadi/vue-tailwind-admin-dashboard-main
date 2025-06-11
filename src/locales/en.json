@@ -1,0 +1,61 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "create": "Create",
+    "edit": "Edit",
+    "delete": "Delete",
+    "bulk_delete": "Bulk Delete",
+    "bulk_delete_confirmation": "Are you sure you want to delete these items?",
+    "loading": "Loading...",
+    "no_data": "No data available.",
+    "actions": "Actions",
+    "add": "Add",
+    "update": "Update",
+    "close": "Close",
+    "confirm": "Confirm",
+    "you_must_login" : "You must login first.",
+    "logout" : "Logout",
+    "login" : "Login",
+    "register" : "Register",
+    "api_not_valid" : "API not valid.",
+    "api_failed" : "API failed.",
+    "api_success" : "API success.",
+    "api_not_found" : "API not found.",
+    "name": "Name",
+    "gender": "Gender",
+    "male": "Male",
+    "female": "Female"
+  },
+  "teacher": {
+    "management": "Teacher Management",
+    "create": "Create Teacher",
+    "edit": "Edit Teacher",
+    "name": "Teacher Name",
+    "gender": "Teacher Gender",
+    "subject_count": "Subject Count",
+    "created_success": "Teacher added successfully!",
+    "updated_success": "Teacher updated successfully!",
+    "deleted_success": "Teacher deleted successfully!",
+    "not_found": "Teacher not found.",
+    "name_placeholder": "Enter teacher name",
+    "gender_placeholder": "Select teacher gender",
+    "error_backend": "An error occurred while saving the teacher. Please try again later.",
+    "permission_to_create": "You do not have permission to create a teacher.",
+    "permission_to_edit": "You do not have permission to edit this teacher.",
+    "permission_to_delete": "You do not have permission to delete this teacher.",
+    "permission_to_view": "You do not have permission to view this teacher.",
+    "delete_confirmation" : "Are you sure you want to delete {name} ? This action cannot be undone. Continue?",
+    "delete_bulk_confirmation": "You are about to delete {count}. This action cannot be undone. Continue?",
+    "bulk_delete_success" : "Teachers deleted successfully.",
+    "bulk_delete_failed" : "Failed to delete teachers. Please try again later."
+  },
+  "validation": {
+    "required": "{field} is required.",
+    "min_length": "{field} must be at least {min} characters.",
+    "invalid_gender": "Invalid gender selected."
+  },
+  "error": {
+    "general_validation_error": "There are validation errors. Please check your input."
+  }
+}
