@@ -10,7 +10,8 @@ import {
   type Teacher,
   type PaginationMeta,
   type PaginationLinks,
-  type ImportErrorResponse, // <--- Import ImportErrorResponse
+  type ImportErrorResponse,
+  type ImportValidationError, // <--- Import ImportErrorResponse
 } from '@/services/teacherService'
 import { isAuthenticated } from '@/services/authService'
 import TableComponent from '@/components/tables/TableComponent.vue'
@@ -29,7 +30,7 @@ import { useToast } from 'vue-toastification'
 import { useI18n } from 'vue-i18n'
 
 // Inject SweetAlert2 yang di-provide dari main.ts
-const Swal = inject('Swal');
+import Swal from 'sweetalert2';
 
 // Inisialisasi useI18n
 const { t } = useI18n()
