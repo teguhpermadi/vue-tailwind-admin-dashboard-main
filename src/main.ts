@@ -28,6 +28,44 @@ import id from './locales/id.json'; // Bahasa Indonesia
 import Swal from 'sweetalert2'
 import 'sweetalert2/dist/sweetalert2.min.css';
 
+// --- Start Laravel Echo / Reverb Configuration ---
+import Echo from 'laravel-echo';
+import Pusher from 'pusher-js'; // Reverb uses Pusher protocol
+
+declare global {
+  interface Window {
+    Pusher: typeof Pusher;
+    Echo: Echo;
+  }
+}
+
+// --- Tambahkan baris ini untuk debugging ---
+console.log("VITE_REVERB_APP_KEY:", import.meta.env.VITE_REVERB_APP_KEY);
+console.log("VITE_REVERB_HOST:", import.meta.env.VITE_REVERB_HOST);
+console.log("VITE_REVERB_PORT:", import.meta.env.VITE_REVERB_PORT);
+console.log("VITE_REVERB_SCHEME:", import.meta.env.VITE_REVERB_SCHEME);
+window.Pusher = Pusher;
+
+// Pastikan VITE_REVERB_APP_KEY dan VITE_REVERB_HOST_URL (atau serupa)
+// didefinisikan di .env Anda dan diekspos melalui Vite
+// Contoh .env:
+// VITE_REVERB_APP_KEY="${REVERB_APP_KEY}"
+// VITE_REVERB_HOST_URL="${REVERB_SCHEME}://${REVERB_HOST}:${REVERB_PORT}"
+// (Jika Anda menggunakan Laravel Vite plugin, VITE_APP_ENV sudah cukup)
+
+window.Echo = new Echo({
+    broadcaster: 'reverb',
+    key: import.meta.env.VITE_REVERB_APP_KEY,
+    wsHost: import.meta.env.VITE_REVERB_HOST,
+    wsPort: import.meta.env.VITE_REVERB_PORT || 8080,
+    wssPort: import.meta.env.VITE_REVERB_PORT || 8080,
+    forceTLS: (import.meta.env.VITE_REVERB_SCHEME === 'https'),
+    disableStats: true,
+    encrypted: (import.meta.env.VITE_REVERB_SCHEME === 'https'),
+    enabledTransports: ['ws', 'wss'],
+});
+// --- End Laravel Echo / Reverb Configuration ---
+
 const app = createApp(App)
 const pinia = createPinia(); // Buat instance Pinia
 

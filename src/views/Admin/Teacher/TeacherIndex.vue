@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch, computed, inject } from 'vue' // Tambahkan 'computed' di sini
+import { ref, onMounted, onBeforeUnmount, watch, computed, inject } from 'vue' // Tambahkan 'computed' di sini
 import {
   fetchTeachers,
   deleteTeacher,
@@ -19,7 +19,7 @@ import PageBreadcrumb from '@/components/common/PageBreadcrumb.vue'
 import ButtonComponent from '@/components/ui/ButtonComponent.vue'
 import ButtonGroupComponent from '@/components/ui/ButtonGroupComponent.vue'
 import { useAuthStore } from '@/stores/authStore'
-import { useToast } from 'vue-toastification';
+import { useToast } from 'vue-toastification'
 
 // Impor useI18n
 import { useI18n } from 'vue-i18n'
@@ -39,7 +39,7 @@ const paginationLinks = ref<PaginationLinks | null>(null)
 const currentPage = ref(1)
 const isLoading = ref(false)
 const error = ref<string | null>(null)
-const toast = useToast();
+const toast = useToast()
 
 // State untuk filter per kolom - akan diikat ke TableComponent menggunakan v-model
 const columnFilters = ref<Record<string, string>>({})
@@ -312,6 +312,42 @@ watch(itemsPerPage, () => {
 // --- Lifecycle Hook ---
 onMounted(() => {
   loadTeachers()
+
+  // Dengarkan event dari channel 'teachers'
+  window.Echo.channel('teachers')
+    .listen('.teacher.added', (e) => {
+      console.log('Guru baru ditambahkan via WebSocket:', e.teacher)
+      // --- PERUBAHAN DI SINI ---
+      // Daripada menambahkan langsung, panggil loadTeachers untuk me-refresh tabel
+      // Ini akan memastikan paginasi, pencarian, dan filter tetap konsisten.
+      // Anda bisa memilih loadTeachers(1) untuk selalu kembali ke halaman pertama
+      // atau loadTeachers(currentPage.value) untuk mencoba tetap di halaman yang sama.
+      loadTeachers(currentPage.value) // Pilihan yang lebih umum
+      // loadTeachers(1); // Jika Anda ingin item baru selalu muncul di halaman pertama
+      toast.success(`Guru ${e.teacher.name} telah ditambahkan!`)
+    })
+    .listen('.teacher.updated', (e) => {
+      // ... kode yang sudah ada untuk update (tetap bagus untuk update item di halaman yang sama) ...
+      console.log('Guru diperbarui via WebSocket:', e.teacher)
+      const index = teachers.value.findIndex((t) => t.id === e.teacher.id)
+      if (index !== -1) {
+        teachers.value[index] = e.teacher
+      }
+      toast.success(`Guru ${e.teacher.name} telah diperbarui!`)
+    })
+    .listen('.teacher.deleted', (e) => {
+      // ... kode yang sudah ada untuk delete (sudah memanggil loadTeachers) ...
+      console.log('Guru dihapus via WebSocket:', e.teacher_id)
+      teachers.value = teachers.value.filter((t) => t.id !== e.teacher_id)
+      toast.success(`Guru telah dihapus!`)
+      loadTeachers(currentPage.value) // Pastikan ini juga ada
+    })
+})
+
+onBeforeUnmount(() => {
+  // Penting: Tinggalkan channel saat komponen dihancurkan
+  window.Echo.leaveChannel('teachers')
+  // window.Echo.leaveChannel(`users.${userId}`); // Untuk private channel
 })
 </script>
 
@@ -335,27 +371,43 @@ onMounted(() => {
       <div
         class="flex flex-col sm:flex-row justify-between items-center mb-6 space-y-4 sm:space-y-0"
       >
-        <div class="flex items-center space-x-2 w-full sm:w-auto justify-start">
-          <!-- Bulk delete button - hanya tampil jika ada item yang dipilih -->
-          <div
-            v-if="canBulkDelete"
-            class="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0 sm:space-x-4"
-          >
-            <div class="flex items-center space-x-2">
-              <ButtonComponent
-                v-if="authStore.can('delete-teacher')"
-                variant="danger"
-                size="sm"
-                @click="openBulkDeleteConfirmModal"
-                :loading="isBulkDeleting"
-              >
-                {{ t('common.bulk_delete') }} ({{ selectedTeacherIds.length }})
-              </ButtonComponent>
-            </div>
+        <!-- Kontainer Kiri: Per Page dan Tombol Hapus Massal -->
+        <div
+          class="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 w-full sm:w-auto justify-start"
+        >
+          <!-- Dropdown "Per Page" -->
+          <div class="flex items-center space-x-2">
+            <label for="perPageSelect" class="text-sm font-medium text-gray-700">Tampilkan:</label>
+            <select
+              id="perPageSelect"
+              v-model.number="itemsPerPage"
+              class="block w-20 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            >
+              <option :value="5">5</option>
+              <option :value="10">10</option>
+              <option :value="20">20</option>
+              <option :value="50">50</option>
+              <option :value="100">100</option>
+            </select>
+            <span class="text-sm text-gray-700">data per halaman</span>
+          </div>
+
+          <!-- Tombol Hapus Massal - hanya tampil jika ada item yang dipilih dan punya izin -->
+          <div v-if="canBulkDelete" class="flex items-center space-x-2">
+            <ButtonComponent
+              v-if="authStore.can('delete-teacher')"
+              variant="danger"
+              size="sm"
+              @click="openBulkDeleteConfirmModal"
+              :loading="isBulkDeleting"
+            >
+              {{ t('common.bulk_delete') }} ({{ selectedTeacherIds.length }})
+            </ButtonComponent>
           </div>
         </div>
 
-        <div class="flex items-center space-x-2 w-full sm:w-auto justify-end">
+        <!-- Kontainer Kanan: Tombol Buat Guru -->
+        <div class="flex items-center w-full sm:w-auto justify-end">
           <ButtonComponent
             v-if="authStore.can('create-teacher')"
             variant="primary"
