@@ -22,7 +22,16 @@
     "name": "Nama",
     "gender": "Jenis Kelamin",
     "male": "Laki-laki",
-    "female": "Perempuan"
+    "female": "Perempuan",
+    "exporting_data": "Ekspor data...",
+    "importing_data": "Impor data...",
+    "success": "Sukses",
+    "import_data": "Impor Data",
+    "download_excel" : "Unduh Excel",
+    "submit_excel" : "Kirim Excel",
+    "download_template" : "Unduh Template",
+    "downloading_template" : "Unduh Template...",
+    "warning" : "Peringatan"
   },
   "teacher": {
     "management": "Manajemen Guru",
@@ -43,7 +52,14 @@
     "permission_to_create": "Anda tidak memiliki izin untuk membuat guru baru.",
     "permission_to_edit": "Anda tidak memiliki izin untuk mengedit data guru ini.",
     "permission_to_delete": "Anda tidak memiliki izin untuk menghapus data guru ini.",
-    "permission_to_view": "Anda tidak memiliki izin untuk melihat data guru ini."
+    "permission_to_view": "Anda tidak memiliki izin untuk melihat data guru ini.",
+    "export_success" : "Guru berhasil diunduh.",
+    "export_failed" : "Guru gagal diunduh.",
+    "import_title" : "Impor Data Guru",
+    "import_description" : "Impor data guru dari file Excel.",
+    "choose_excel_file" : "Pilih File Excel",
+    "selected_file" : "File yang dipilih:",
+    "select_file_first" : "Silakan pilih file terlebih dahulu."
   },
   "validation": {
     "required": "{field} wajib diisi.",

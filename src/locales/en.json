@@ -25,7 +25,15 @@
     "name": "Name",
     "gender": "Gender",
     "male": "Male",
-    "female": "Female"
+    "female": "Female",
+    "exporting_data" : "Exporting data...",
+    "importing_data" : "Importing data...",
+    "success" : "Success",
+    "download_excel" : "Download Excel",
+    "submit_excel" : "Submit Excel",
+    "download_template" : "Download Template",
+    "downloading_template" : "Downloading template...",
+    "warning" : "Warning"
   },
   "teacher": {
     "management": "Teacher Management",
@@ -48,7 +56,15 @@
     "delete_confirmation" : "Are you sure you want to delete {name} ? This action cannot be undone. Continue?",
     "delete_bulk_confirmation": "You are about to delete {count}. This action cannot be undone. Continue?",
     "bulk_delete_success" : "Teachers deleted successfully.",
-    "bulk_delete_failed" : "Failed to delete teachers. Please try again later."
+    "bulk_delete_failed" : "Failed to delete teachers. Please try again later.",
+    "export_success" : "Teachers exported successfully.",
+    "export_failed" : "Failed to export teachers. Please try again later.",
+    "import_data" : "Import Data",
+    "import_title" : "Import Teachers",
+    "import_description" : "Import teachers from an Excel file.",
+    "choose_excel_file" : "Choose Excel File",
+    "selected_file" : "Selected file:",
+    "select_file_first" : "Please select a file first."
   },
   "validation": {
     "required": "{field} is required.",

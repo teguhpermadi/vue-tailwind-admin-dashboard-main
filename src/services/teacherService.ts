@@ -72,6 +72,19 @@ export interface SingleTeacherResponse {
   message?: string;
 }
 
+// NEW: Interface for import validation errors
+export interface ImportValidationError {
+  row: number;
+  attribute: string;
+  errors: string[];
+  values: Record<string, any>;
+}
+
+export interface ImportErrorResponse {
+    message: string;
+    errors: ImportValidationError[];
+}
+
 export type CreateTeacherPayload = Omit<Teacher, 'id' | 'subjects' | 'created_at' | 'updated_at' | 'deleted_at'>;
 export type UpdateTeacherPayload = Partial<Omit<Teacher, 'id' | 'subjects' | 'created_at' | 'updated_at' | 'deleted_at'>>;
 
@@ -237,4 +250,68 @@ export const forceDeleteTeacher = async (id: string): Promise<void> => {
         console.error(`Error force deleting teacher with ID ${id}:`, error.response?.data || error.message);
         throw error;
     }
+};
+
+/**
+ * Mengekspor data guru ke file Excel dari API.
+ * @returns Promise<Blob> Blob yang berisi data file Excel.
+ * @throws Error jika permintaan API gagal.
+ */
+export const exportTeachers = async (): Promise<Blob> => {
+  try {
+    const response = await api.get('/teachers/export', {
+      responseType: 'blob', // Penting: memberitahu Axios untuk mengharapkan respons biner (file)
+    });
+    return response.data; // Ini akan menjadi Blob
+  } catch (error: any) {
+    console.error('Error exporting teachers:', error.response?.data || error.message);
+    throw error; // Biarkan komponen pemanggil menangani error
+  }
+};
+
+/**
+ * Mengimpor data guru dari file Excel ke API.
+ * @param file Objek File yang akan diunggah (misal: dari input type="file").
+ * @returns Promise<any> Respons dari API (biasanya berisi pesan sukses).
+ * @throws Error jika permintaan API gagal, termasuk error validasi dari backend.
+ */
+export const importTeachers = async (file: File): Promise<any> => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file); // 'file' harus sesuai dengan nama input di backend (request->file('file'))
+
+    const response = await api.post('/teachers/import', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data', // Sangat penting untuk upload file
+      },
+    });
+    return response.data; // Berisi pesan sukses dari backend
+  } catch (error: any) {
+    console.error('Error importing teachers:', error.response?.data || error.message);
+    // Tangani error validasi spesifik dari Laravel Excel (status 422)
+    if (error.response && error.response.status === 422) {
+      // Melemparkan seluruh data respons error agar komponen pemanggil bisa menampilkannya
+      // Misalnya, { message: "The given data was invalid.", errors: [...] }
+      const errorData: ImportErrorResponse = error.response.data;
+      throw errorData; // Melemparkan objek error yang sudah diparsing
+    }
+    throw error; // Melemparkan error lain ke komponen pemanggil
+  }
+};
+
+/**
+ * Mengunduh template Excel kosong untuk impor data guru dari API.
+ * @returns Promise<Blob> Blob yang berisi data file Excel template.
+ * @throws Error jika permintaan API gagal.
+ */
+export const downloadTeacherTemplate = async (): Promise<Blob> => {
+  try {
+    const response = await api.get('/teachers/template', {
+      responseType: 'blob', // Penting: memberitahu Axios untuk mengharapkan respons biner (file)
+    });
+    return response.data; // Ini akan menjadi Blob
+  } catch (error: any) {
+    console.error('Error downloading teacher template:', error.response?.data || error.message);
+    throw error; // Biarkan komponen pemanggil menangani error
+  }
 };
