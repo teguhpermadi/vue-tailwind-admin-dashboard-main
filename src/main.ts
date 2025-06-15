@@ -40,10 +40,10 @@ declare global {
 }
 
 // --- Tambahkan baris ini untuk debugging ---
-console.log("VITE_REVERB_APP_KEY:", import.meta.env.VITE_REVERB_APP_KEY);
-console.log("VITE_REVERB_HOST:", import.meta.env.VITE_REVERB_HOST);
-console.log("VITE_REVERB_PORT:", import.meta.env.VITE_REVERB_PORT);
-console.log("VITE_REVERB_SCHEME:", import.meta.env.VITE_REVERB_SCHEME);
+// console.log("VITE_REVERB_APP_KEY:", import.meta.env.VITE_REVERB_APP_KEY);
+// console.log("VITE_REVERB_HOST:", import.meta.env.VITE_REVERB_HOST);
+// console.log("VITE_REVERB_PORT:", import.meta.env.VITE_REVERB_PORT);
+// console.log("VITE_REVERB_SCHEME:", import.meta.env.VITE_REVERB_SCHEME);
 window.Pusher = Pusher;
 
 // Pastikan VITE_REVERB_APP_KEY dan VITE_REVERB_HOST_URL (atau serupa)
