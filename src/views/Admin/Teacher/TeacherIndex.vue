@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch, computed } from 'vue' // Tambahkan 'computed' di sini
+import { ref, onMounted, watch, computed, inject } from 'vue' // Tambahkan 'computed' di sini
 import {
   fetchTeachers,
   deleteTeacher,
@@ -23,6 +23,7 @@ import { useToast } from 'vue-toastification';
 
 // Impor useI18n
 import { useI18n } from 'vue-i18n'
+
 // Inisialisasi useI18n
 const { t } = useI18n()
 
@@ -424,7 +425,6 @@ onMounted(() => {
       <div class="mt-8 justify-between items-center">
         <TablePagination :meta="paginationMeta" :links="paginationLinks" @go-to-page="goToPage" />
       </div>
-
       <ModalComponent
         v-model="showDeleteConfirmModal"
         title="Konfirmasi Hapus Data"

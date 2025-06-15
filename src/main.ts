@@ -24,6 +24,10 @@ import 'vue-toastification/dist/index.css'; // <--- Import CSS bawaan
 import en from './locales/en.json'; // Bahasa Inggris
 import id from './locales/id.json'; // Bahasa Indonesia
 
+// Import SweetAlert2
+import Swal from 'sweetalert2'
+import 'sweetalert2/dist/sweetalert2.min.css';
+
 const app = createApp(App)
 const pinia = createPinia(); // Buat instance Pinia
 
@@ -67,4 +71,5 @@ app.use(router)
 app.use(VueApexCharts)
 app.use(MotionPlugin, motionPresets)
 app.use(i18n)
+app.provide('Swal', Swal)
 app.mount('#app')
