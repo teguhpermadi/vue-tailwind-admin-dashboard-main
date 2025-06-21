@@ -59,7 +59,10 @@
     "import_description" : "Impor data guru dari file Excel.",
     "choose_excel_file" : "Pilih File Excel",
     "selected_file" : "File yang dipilih:",
-    "select_file_first" : "Silakan pilih file terlebih dahulu."
+    "select_file_first" : "Silakan pilih file terlebih dahulu.",
+    "template_download_success" : "Template berhasil diunduh.",
+    "template_download_failed" : "Gagal mengunduh template. Silakan coba lagi nanti.",
+    "import_failed" : "Gagal mengimpor guru. Silakan coba lagi nanti. Pastikan menggunakan template yang disediakan."
   },
   "validation": {
     "required": "{field} wajib diisi.",

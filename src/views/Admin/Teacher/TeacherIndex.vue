@@ -733,18 +733,6 @@ onBeforeUnmount(() => {
             {{ t('teacher.selected_file') }}: <span class="font-medium">{{ fileToImport.name }}</span>
           </p>
         </div>
-
-        <div v-if="importValidationErrors.length > 0" class="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-md">
-            <p class="font-bold mb-2">{{ t('teacher.validation_errors') }}:</p>
-            <ul class="list-disc list-inside text-sm">
-                <li v-for="(err, index) in importValidationErrors" :key="index">
-                    {{ t('common.row') }} {{ err.row }}:
-                    <span v-for="(msg, msgIdx) in err.errors" :key="msgIdx">{{ msg }}<span v-if="msgIdx < err.errors.length - 1">, </span></span>
-                </li>
-            </ul>
-        </div>
-
-
         <template #actions>
           <ButtonComponent
             variant="secondary"

@@ -64,7 +64,10 @@
     "import_description" : "Import teachers from an Excel file.",
     "choose_excel_file" : "Choose Excel File",
     "selected_file" : "Selected file:",
-    "select_file_first" : "Please select a file first."
+    "select_file_first" : "Please select a file first.",
+    "template_download_success" : "Template downloaded successfully.",
+    "template_download_failed" : "Failed to download template. Please try again later.",
+    "import_failed" : "Failed to import teachers. Please try again later. Be sure to use the template provided."
   },
   "validation": {
     "required": "{field} is required.",
