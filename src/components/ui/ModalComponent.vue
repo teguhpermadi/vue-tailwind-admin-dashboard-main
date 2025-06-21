@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, watch, onUnmounted } from 'vue';
 
 // --- Interfaces ---
 export type ModalType = 'default' | 'info' | 'success' | 'warning' | 'danger' | 'confirm';
@@ -24,13 +24,16 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void; // Untuk v-model
-  (e: 'close'): void; // Event ketika modal ditutup (baik dari tombol close atau backdrop)
+  (e: 'close'): void; // Event ketika modal ditutup (baik dari tombol close, backdrop, atau Escape)
 }>();
 
 // --- Computed properties for styling ---
 const modalClasses = computed(() => {
   let classes = ['relative w-full mx-auto p-6 rounded-lg shadow-xl transform transition-all sm:my-8'];
   
+  // Perbaikan Transisi CSS: Tambahkan kelas 'modal-content' agar CSS yang Anda buat berfungsi
+  classes.push('modal-content'); 
+
   // Max width classes (Tailwind)
   const maxWidthMap = {
     'sm': 'sm:max-w-sm',
@@ -88,24 +91,67 @@ const iconClasses = computed(() => {
 
 // --- Handlers ---
 const close = () => {
+  console.log('close() dipanggil. Menutup modal.');
   emit('update:modelValue', false);
   emit('close');
 };
 
-const handleBackdropClick = (event: MouseEvent) => {
-  // Hanya tutup jika klik terjadi langsung pada backdrop (bukan pada modal itu sendiri)
-  if (props.backdropDismiss && event.target === event.currentTarget) {
+const handleBackdropClick = () => { // Tidak perlu event parameter jika @click.stop digunakan di anak
+  console.log('handleBackdropClick dipicu.');
+  if (props.backdropDismiss) {
+    console.log('Backdrop dismiss aktif, menutup modal.');
     close();
   }
 };
+
+// --- Penanganan tombol Escape ---
+const handleKeydown = (event: KeyboardEvent) => {
+  console.log('Keydown event terdeteksi:', event.key, 'ModelValue:', props.modelValue);
+  if (event.key === 'Escape' && props.modelValue) {
+    console.log('Tombol Escape ditekan, menutup modal.');
+    event.preventDefault();
+    close();
+  }
+};
+
+// Mengawasi perubahan modelValue untuk menambah/menghapus event listener
+watch(() => props.modelValue, (newValue) => {
+  console.log('Watch: modelValue berubah menjadi:', newValue);
+  if (newValue) {
+    document.addEventListener('keydown', handleKeydown);
+    console.log('Event listener keydown DITAMBAHKAN.');
+  } else {
+    document.removeEventListener('keydown', handleKeydown);
+    console.log('Event listener keydown DIHAPUS.');
+  }
+}, { immediate: true });
+
+// Penting: Hapus event listener saat komponen dihancurkan
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleKeydown);
+  console.log('Komponen di-unmounted, listener keydown dihapus (safeguard).');
+});
 </script>
 
 <template>
   <Transition name="modal">
-    <div v-if="modelValue" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click="handleBackdropClick">
-      <div class="fixed inset-0 bg-gray-900 bg-opacity-50 transition-opacity" aria-hidden="true"></div>
+    <!-- Kontainer utama modal, p-4 untuk padding di sekitar backdrop/modal -->
+    <div v-if="modelValue" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <!-- Backdrop visual yang sekarang menerima event click -->
+      <div 
+        class="absolute inset-0 bg-gray-900 bg-opacity-50 transition-opacity" 
+        aria-hidden="true" 
+        @click="handleBackdropClick"
+      ></div>
 
-      <div :class="modalClasses" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <!-- Konten modal, dengan @click.stop untuk mencegah propagasi ke backdrop -->
+      <div 
+        :class="modalClasses" 
+        role="dialog" 
+        aria-modal="true" 
+        aria-labelledby="modal-title"
+        @click.stop 
+      >
         <div :class="headerClasses">
           <div class="flex items-center space-x-3">
             <svg v-if="type === 'info'" :class="iconClasses" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
@@ -116,7 +162,7 @@ const handleBackdropClick = (event: MouseEvent) => {
             
             <h3 id="modal-title" class="text-lg font-semibold">{{ title }}</h3>
           </div>
-          <button v-if="showCloseButton" @click="close" class="text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-300 rounded-md p-1 -m-1">
+          <button v-if="showCloseButton" @click="close" class="text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-300 rounded-md p-1 -m-1">
             <span class="sr-only">Tutup</span>
             <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
           </button>
