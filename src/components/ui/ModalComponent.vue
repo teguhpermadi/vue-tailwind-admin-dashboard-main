@@ -91,24 +91,19 @@ const iconClasses = computed(() => {
 
 // --- Handlers ---
 const close = () => {
-  console.log('close() dipanggil. Menutup modal.');
   emit('update:modelValue', false);
   emit('close');
 };
 
 const handleBackdropClick = () => { // Tidak perlu event parameter jika @click.stop digunakan di anak
-  console.log('handleBackdropClick dipicu.');
   if (props.backdropDismiss) {
-    console.log('Backdrop dismiss aktif, menutup modal.');
     close();
   }
 };
 
 // --- Penanganan tombol Escape ---
 const handleKeydown = (event: KeyboardEvent) => {
-  console.log('Keydown event terdeteksi:', event.key, 'ModelValue:', props.modelValue);
   if (event.key === 'Escape' && props.modelValue) {
-    console.log('Tombol Escape ditekan, menutup modal.');
     event.preventDefault();
     close();
   }
@@ -116,20 +111,16 @@ const handleKeydown = (event: KeyboardEvent) => {
 
 // Mengawasi perubahan modelValue untuk menambah/menghapus event listener
 watch(() => props.modelValue, (newValue) => {
-  console.log('Watch: modelValue berubah menjadi:', newValue);
   if (newValue) {
     document.addEventListener('keydown', handleKeydown);
-    console.log('Event listener keydown DITAMBAHKAN.');
   } else {
     document.removeEventListener('keydown', handleKeydown);
-    console.log('Event listener keydown DIHAPUS.');
   }
 }, { immediate: true });
 
 // Penting: Hapus event listener saat komponen dihancurkan
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown);
-  console.log('Komponen di-unmounted, listener keydown dihapus (safeguard).');
 });
 </script>
 
