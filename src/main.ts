@@ -32,6 +32,10 @@ import 'sweetalert2/dist/sweetalert2.min.css';
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js'; // Reverb uses Pusher protocol
 
+// import Nprogress
+import NProgress from 'nprogress'; // Import NProgress
+import 'nprogress/nprogress.css'; // Import CSS default NProgress
+
 declare global {
   interface Window {
     Pusher: typeof Pusher;
@@ -101,6 +105,25 @@ const i18n = createI18n({
     id  // Tambahkan pesan bahasa Indonesia
   },
   globalInjection: true, // Membuat $t tersedia di template tanpa import
+});
+
+// --- Vue Router Navigation Guards untuk NProgress ---
+router.beforeEach((to, from, next) => {
+  // Hanya mulai progress bar jika navigasi tidak dari rute yang sama atau jika ada perubahan param
+  // Ini menghindari progress bar muncul pada perubahan query param yang kecil
+  if (to.path !== from.path || JSON.stringify(to.query) !== JSON.stringify(from.query)) {
+    NProgress.start(); // Mulai progress bar
+  }
+  next();
+});
+
+router.afterEach(() => {
+  NProgress.done(); // Selesaikan progress bar setelah navigasi selesai
+});
+
+router.onError((error) => {
+  console.error('Router navigation error:', error);
+  NProgress.done(); // Pastikan progress bar selesai bahkan jika ada error navigasi
 });
 
 app.use(Toast, toastOptions); // Daftarkan plugin dengan options

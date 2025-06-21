@@ -33,6 +33,7 @@
     "jsvectormap": "^1.6.0",
     "laravel-echo": "^2.1.5",
     "lucide-vue-next": "^0.474.0",
+    "nprogress": "^0.2.0",
     "pinia": "^3.0.3",
     "pusher-js": "^8.4.0",
     "sweetalert2": "^11.6.13",
