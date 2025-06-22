@@ -9,7 +9,7 @@ interface Props {
   title?: string;      // Judul modal
   type?: ModalType;    // Tipe modal untuk styling (e.g., info, success, danger, confirm)
   showCloseButton?: boolean; // Tampilkan tombol X di header
-  backdropDismiss?: boolean; // Izinkan menutup modal dengan klik di luar
+  closeAnywhere?: boolean; // NEW: Izinkan menutup modal dengan klik di luar (menggantikan backdropDismiss)
   maxWidth?: string;   // Lebar maksimum modal (e.g., 'sm', 'md', 'lg', '2xl' untuk Tailwind)
 }
 
@@ -18,7 +18,7 @@ const props = withDefaults(defineProps<Props>(), {
   title: 'Peringatan',
   type: 'default',
   showCloseButton: true,
-  backdropDismiss: true,
+  closeAnywhere: true, // Default ke true (bisa ditutup dengan klik di luar)
   maxWidth: 'md', // Default lebar medium
 });
 
@@ -31,7 +31,7 @@ const emit = defineEmits<{
 const modalClasses = computed(() => {
   let classes = ['relative w-full mx-auto p-6 rounded-lg shadow-xl transform transition-all sm:my-8'];
   
-  // Perbaikan Transisi CSS: Tambahkan kelas 'modal-content' agar CSS yang Anda buat berfungsi
+  // Pastikan kelas 'modal-content' ditambahkan untuk transisi CSS
   classes.push('modal-content'); 
 
   // Max width classes (Tailwind)
@@ -95,8 +95,9 @@ const close = () => {
   emit('close');
 };
 
-const handleBackdropClick = () => { // Tidak perlu event parameter jika @click.stop digunakan di anak
-  if (props.backdropDismiss) {
+const handleBackdropClick = () => {
+  // Menggunakan props.closeAnywhere untuk mengontrol penutupan melalui klik di luar
+  if (props.closeAnywhere) {
     close();
   }
 };
@@ -126,9 +127,9 @@ onUnmounted(() => {
 
 <template>
   <Transition name="modal">
-    <!-- Kontainer utama modal, p-4 untuk padding di sekitar backdrop/modal -->
+    <!-- Kontainer utama modal -->
     <div v-if="modelValue" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <!-- Backdrop visual yang sekarang menerima event click -->
+      <!-- Backdrop visual yang menerima event click -->
       <div 
         class="absolute inset-0 bg-gray-900 bg-opacity-50 transition-opacity" 
         aria-hidden="true" 
@@ -153,7 +154,7 @@ onUnmounted(() => {
             
             <h3 id="modal-title" class="text-lg font-semibold">{{ title }}</h3>
           </div>
-          <button v-if="showCloseButton" @click="close" class="text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-300 rounded-md p-1 -m-1">
+          <button v-if="showCloseButton" @click="close" class="text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-300 rounded-md">
             <span class="sr-only">Tutup</span>
             <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
           </button>
@@ -172,7 +173,7 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-/* Transition for modal appearance */
+/* Transisi untuk penampilan modal */
 .modal-enter-active,
 .modal-leave-active {
   transition: opacity 0.3s ease;
@@ -183,7 +184,7 @@ onUnmounted(() => {
   opacity: 0;
 }
 
-/* For modal content transition */
+/* Untuk transisi konten modal */
 .modal-enter-active .modal-content,
 .modal-leave-active .modal-content {
   transition: all 0.3s ease;
@@ -191,7 +192,7 @@ onUnmounted(() => {
 
 .modal-enter-from .modal-content,
 .modal-leave-to .modal-content {
-  -webkit-transform: scale(1.1);
-  transform: scale(1.1);
+  -webkit-transform: scale(0.95); /* Sedikit mengecil saat masuk/keluar */
+  transform: scale(0.95);         /* Sedikit mengecil saat masuk/keluar */
 }
 </style>
