@@ -67,6 +67,18 @@ window.Echo = new Echo({
     disableStats: true,
     encrypted: (import.meta.env.VITE_REVERB_SCHEME === 'https'),
     enabledTransports: ['ws', 'wss'],
+    debug: true
+});
+
+// Log koneksi
+window.Echo.connector.pusher.connection.bind('connected', () => {
+  console.log('Echo connected to WebSocket server!');
+});
+window.Echo.connector.pusher.connection.bind('disconnected', () => {
+  console.log('Echo disconnected from WebSocket server!');
+});
+window.Echo.connector.pusher.connection.bind('error', (err) => {
+  console.error('Echo connection error:', err);
 });
 // --- End Laravel Echo / Reverb Configuration ---
 

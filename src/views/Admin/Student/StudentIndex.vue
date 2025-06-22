@@ -510,18 +510,18 @@ onMounted(() => {
   window.Echo.channel('students')
     .listen('.student.created', (e) => {
       loadStudents(currentPage.value) // Diubah ke loadStudents
-      toast.success(t('student.created_success_toast', { name: e.student.name }))
+      // toast.success(t('student.created_success_toast', { name: e.student.name }))
     })
     .listen('.student.updated', (e) => {
       const index = students.value.findIndex((s) => s.id === e.student.id)
       if (index !== -1) {
         students.value[index] = e.student
       }
-      toast.success(t('student.updated_success_toast', { name: e.student.name }))
+      // toast.success(t('student.updated_success_toast', { name: e.student.name }))
     })
     .listen('.student.deleted', (e) => {
       students.value = students.value.filter((s) => s.id !== e.student_id)
-      toast.success(t('student.deleted_success_toast'))
+      // toast.success(t('student.deleted_success_toast'))
       loadStudents(currentPage.value) // Diubah ke loadStudents
     })
 })

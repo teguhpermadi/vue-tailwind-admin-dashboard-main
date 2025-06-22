@@ -93,7 +93,11 @@
     "downloading_template": "Mengunduh template...",
     "template_download_success": "Template berhasil diunduh.",
     "template_download_failed": "Gagal mengunduh template. Silakan coba lagi nanti.",
-    "download_excel": "Unduh Excel"
+    "download_excel": "Unduh Excel",
+
+    "created_success_toast": "Guru {name} telah ditambahkan!",
+    "updated_success_toast": "Guru {name} telah diperbarui!",
+    "deleted_success_toast": "Guru telah dihapus!"
   },
   "student": {
     "management": "Manajemen Siswa",

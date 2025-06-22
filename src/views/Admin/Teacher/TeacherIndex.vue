@@ -506,26 +506,30 @@ onMounted(() => {
   loadTeachers()
 
   window.Echo.channel('teachers')
-    .listen('.teacher.added', (e) => {
+    .listen('.teacher.created', (e) => {
+      // console.log('Event received: teacher.created', e); // DEBUG LOG
       loadTeachers(currentPage.value)
-      toast.success(`Guru ${e.teacher.name} telah ditambahkan!`) // This toast message is hardcoded, consider i18n if needed
+      // toast.success(t('teacher.created_success_toast', { name: e.teacher.name })) // Menggunakan kunci i18n baru
     })
     .listen('.teacher.updated', (e) => {
+      // console.log('Event received: teacher.updated', e); // DEBUG LOG
       const index = teachers.value.findIndex((t) => t.id === e.teacher.id)
       if (index !== -1) {
         teachers.value[index] = e.teacher
       }
-      toast.success(`Guru ${e.teacher.name} telah diperbarui!`) // This toast message is hardcoded
+      // toast.success(t('teacher.updated_success_toast', { name: e.teacher.name })) // Menggunakan kunci i18n baru
     })
     .listen('.teacher.deleted', (e) => {
+      // console.log('Event received: teacher.deleted', e); // DEBUG LOG
       teachers.value = teachers.value.filter((t) => t.id !== e.teacher_id)
-      toast.success(`Guru telah dihapus!`) // This toast message is hardcoded
+      // toast.success(t('teacher.deleted_success_toast')) // Menggunakan kunci i18n baru
       loadTeachers(currentPage.value)
     })
 })
 
 onBeforeUnmount(() => {
   window.Echo.leaveChannel('teachers')
+  console.log('Leaving teachers channel.'); // DEBUG LOG
 })
 </script>
 

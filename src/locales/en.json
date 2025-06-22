@@ -93,7 +93,11 @@
     "downloading_template": "Downloading template...",
     "template_download_success": "Template downloaded successfully.",
     "template_download_failed": "Failed to download template. Please try again later.",
-    "download_excel": "Download Excel"
+    "download_excel": "Download Excel",
+
+    "created_success_toast": "Teacher {name} has been added!",
+    "updated_success_toast": "Teacher {name} has been updated!",
+    "deleted_success_toast": "Teacher has been deleted!"
   },
   "student": {
     "management": "Student Management",
