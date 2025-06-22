@@ -62,6 +62,33 @@ const router = createRouter({
       }
     },
     {
+      path: '/student',
+      name: 'student.index',
+      component: () => import('../views/Admin/Student/StudentIndex.vue'),
+      meta: {
+        title: 'Student',
+        requiresAuth: true
+      },
+    },
+    {
+      path: '/student/create', // Rute baru untuk membuat siswa
+      name: 'student.create',
+      component: () => import('../views/Admin/Student/StudentCreate.vue'),
+      meta: { 
+        title: 'Create Student',
+        requiresAuth: true
+       },
+    },
+    {
+      path: '/student/:id/edit',
+      name: 'student.edit',
+      component: () => import('../views/Admin/Student/StudentEdit.vue'),
+      meta: {
+        title: 'Edit Student',
+        requiresAuth: true
+      }
+    },
+    {
       path: '/',
       name: 'Ecommerce',
       component: () => import('../views/Ecommerce.vue'),

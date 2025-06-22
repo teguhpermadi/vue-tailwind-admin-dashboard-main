@@ -29,4 +29,4 @@ export const teacherSchema = () => {
 
 // Inferensi tipe dari skema Zod yang dikembalikan oleh fungsi.
 // Gunakan ReturnType<typeof createTeacherSchema> untuk mendapatkan tipe dari hasil fungsi.
-export type TeacherFormValues = z.infer<ReturnType<typeof createTeacherSchema>>;
+export type TeacherFormValues = z.infer<ReturnType<typeof teacherSchema>>;

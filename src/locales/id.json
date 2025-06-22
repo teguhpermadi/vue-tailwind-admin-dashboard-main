@@ -37,7 +37,12 @@
     "api_not_found": "API tidak ditemukan.",
 
     "show": "Tampilkan",
-    "data_per_page": "data per halaman"
+    "data_per_page": "data per halaman",
+    
+    "row": "Baris",
+    "attribute": "Atribut",
+    "errors": "Kesalahan",
+    "values": "Nilai"
   },
   "teacher": {
     "management": "Manajemen Guru",
@@ -88,12 +93,60 @@
     "downloading_template": "Mengunduh template...",
     "template_download_success": "Template berhasil diunduh.",
     "template_download_failed": "Gagal mengunduh template. Silakan coba lagi nanti.",
-    "download_excel": "Unduh Excel",
+    "download_excel": "Unduh Excel"
+  },
+  "student": {
+    "management": "Manajemen Siswa",
+    "create": "Buat Siswa",
+    "edit": "Ubah Siswa",
+    "name": "Nama Siswa",
+    "gender": "Jenis Kelamin Siswa",
+    "subject_count": "Jumlah Mata Pelajaran",
+    "name_placeholder": "Masukkan nama siswa",
+    "gender_placeholder": "Pilih jenis kelamin siswa",
+    "nis": "NIS",
+    "nisn" : "NISN",
+
+    "created_success": "Siswa berhasil ditambahkan!",
+    "updated_success": "Siswa berhasil diperbarui!",
+    "deleted_success": "Siswa berhasil dihapus!",
+    "bulk_delete_success": "Siswa berhasil dihapus secara massal.",
+    "bulk_delete_failed": "Gagal menghapus siswa secara massal. Silakan coba lagi nanti.",
+    "not_found": "Siswa tidak ditemukan.",
+    "error_backend": "Terjadi kesalahan saat menyimpan siswa. Silakan coba lagi nanti.",
     
-    "row": "Baris",
-    "attribute": "Atribut",
-    "errors": "Kesalahan",
-    "values": "Nilai"
+    "delete_confirmation_single": "Apakah Anda yakin ingin menghapus {name}? Tindakan ini tidak dapat dibatalkan. Lanjutkan?",
+    "delete_confirmation_bulk": "Anda akan menghapus {count} siswa. Tindakan ini tidak dapat dibatalkan. Lanjutkan?",
+
+    "permission_to_create": "Anda tidak memiliki izin untuk membuat siswa.",
+    "permission_to_edit": "Anda tidak memiliki izin untuk mengubah siswa ini.",
+    "permission_to_delete": "Anda tidak memiliki izin untuk menghapus siswa ini.",
+    "permission_to_view": "Anda tidak memiliki izin untuk melihat siswa ini.",
+
+    "import_data": "Impor Data",
+    "import_title": "Impor Siswa",
+    "import_description": "Impor data siswa dari file Excel.",
+    "choose_excel_file": "Pilih File Excel",
+    "selected_file": "File terpilih:",
+    "select_file_first": "Mohon pilih file terlebih dahulu.",
+    "submit_excel": "Kirim Excel",
+    "importing_data": "Mengimpor data...",
+    "import_success": "Siswa berhasil diimpor. {count} baris diproses.",
+    "import_failed_general": "Gagal mengimpor siswa. Silakan coba lagi nanti.",
+    "import_template_invalid": "File yang diunggah bukan template yang valid. Mohon unduh template terbaru dan coba lagi.",
+    "import_validation_errors": "Beberapa baris gagal validasi. Mohon periksa detailnya:",
+    "general_import_error": "Terjadi kesalahan tak terduga selama impor. Silakan coba lagi nanti.",
+    
+    "export_data": "Ekspor Data",
+    "exporting_data": "Mengekspor data...",
+    "export_success": "Siswa berhasil diekspor.",
+    "export_failed": "Gagal mengekspor siswa. Silakan coba lagi nanti.",
+    
+    "download_template": "Unduh Template",
+    "downloading_template": "Mengunduh template...",
+    "template_download_success": "Template berhasil diunduh.",
+    "template_download_failed": "Gagal mengunduh template. Silakan coba lagi nanti.",
+    "download_excel": "Unduh Excel"
   },
   "validation": {
     "required": "{field} wajib diisi.",

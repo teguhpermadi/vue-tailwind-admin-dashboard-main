@@ -37,7 +37,12 @@
     "api_not_found": "API not found.",
 
     "show": "Show",
-    "data_per_page": "data per page"
+    "data_per_page": "data per page",
+    
+    "row": "Row",
+    "attribute": "Attribute",
+    "errors": "Errors",
+    "values": "Values"
   },
   "teacher": {
     "management": "Teacher Management",
@@ -88,12 +93,60 @@
     "downloading_template": "Downloading template...",
     "template_download_success": "Template downloaded successfully.",
     "template_download_failed": "Failed to download template. Please try again later.",
-    "download_excel": "Download Excel",
+    "download_excel": "Download Excel"
+  },
+  "student": {
+    "management": "Student Management",
+    "create": "Create Student",
+    "edit": "Edit Student",
+    "name": "Student Name",
+    "gender": "Student Gender",
+    "subject_count": "Subject Count",
+    "name_placeholder": "Enter student name",
+    "gender_placeholder": "Select student gender",
+    "nis": "NIS",
+    "nisn" : "NISN",
+
+    "created_success": "Student added successfully!",
+    "updated_success": "Student updated successfully!",
+    "deleted_success": "Student deleted successfully!",
+    "bulk_delete_success": "Students deleted successfully.",
+    "bulk_delete_failed": "Failed to delete students. Please try again later.",
+    "not_found": "Student not found.",
+    "error_backend": "An error occurred while saving the student. Please try again later.",
     
-    "row": "Row",
-    "attribute": "Attribute",
-    "errors": "Errors",
-    "values": "Values"
+    "delete_confirmation_single": "Are you sure you want to delete {name}? This action cannot be undone. Continue?",
+    "delete_confirmation_bulk": "You are about to delete {count} students. This action cannot be undone. Continue?",
+
+    "permission_to_create": "You do not have permission to create a student.",
+    "permission_to_edit": "You do not have permission to edit this student.",
+    "permission_to_delete": "You do not have permission to delete this student.",
+    "permission_to_view": "You do not have permission to view this student.",
+
+    "import_data": "Import Data",
+    "import_title": "Import Students",
+    "import_description": "Import students from an Excel file.",
+    "choose_excel_file": "Choose Excel File",
+    "selected_file": "Selected file:",
+    "select_file_first": "Please select a file first.",
+    "submit_excel": "Submit Excel",
+    "importing_data": "Importing data...",
+    "import_success": "Students imported successfully. {count} rows processed.",
+    "import_failed_general": "Failed to import students. Please try again later.",
+    "import_template_invalid": "The uploaded file is not a valid template. Please download the latest template and try again.",
+    "import_validation_errors": "Some rows failed validation. Please check the details:",
+    "general_import_error": "An unexpected error occurred during import. Please try again later.",
+    
+    "export_data": "Export Data",
+    "exporting_data": "Exporting data...",
+    "export_success": "Students exported successfully.",
+    "export_failed": "Failed to export students. Please try again later.",
+    
+    "download_template": "Download Template",
+    "downloading_template": "Downloading template...",
+    "template_download_success": "Template downloaded successfully.",
+    "template_download_failed": "Failed to download template. Please try again later.",
+    "download_excel": "Download Excel"
   },
   "validation": {
     "required": "{field} is required.",

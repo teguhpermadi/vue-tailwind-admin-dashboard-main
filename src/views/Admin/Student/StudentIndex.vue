@@ -1,18 +1,18 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, watch, computed, inject } from 'vue'
 import {
-  fetchTeachers,
-  deleteTeacher,
-  deleteMultipleTeachers,
-  exportTeachers,
-  importTeachers,
-  downloadTeacherTemplate,
-  type Teacher,
+  fetchStudents,
+  deleteStudent,
+  deleteMultipleStudents,
+  exportStudents,
+  importStudents,
+  downloadStudentTemplate,
+  type Student,
   type PaginationMeta,
   type PaginationLinks,
   type ImportErrorResponse,
   type ImportValidationError,
-} from '@/services/teacherService'
+} from '@/services/studentService'
 import { isAuthenticated } from '@/services/authService'
 import TableComponent from '@/components/tables/TableComponent.vue'
 import TablePagination from '@/components/tables/TablePagination.vue'
@@ -35,13 +35,13 @@ import Swal from 'sweetalert2';
 // Inisialisasi useI18n
 const { t } = useI18n()
 
-const currentPageTitle = ref(t('teacher.management'))
+const currentPageTitle = ref(t('student.management'))
 
 const router = useRouter()
 const authStore = useAuthStore()
 
 // --- State Variables ---
-const teachers = ref<Teacher[]>([])
+const students = ref<Student[]>([])
 const paginationMeta = ref<PaginationMeta | null>(null)
 const paginationLinks = ref<PaginationLinks | null>(null)
 const currentPage = ref(1)
@@ -51,7 +51,7 @@ const toast = useToast()
 
 // State untuk filter per kolom - akan diikat ke TableComponent menggunakan v-model
 const columnFilters = ref<Record<string, string>>({})
-const appliedFilters = ref<Record<string, string>>({}) // Filter yang sudah diterapkan ke API
+const appliedFilters = ref<Record<string, string>>({})
 
 // State untuk sorting - akan diikat ke TableComponent
 const currentSortKey = ref('')
@@ -63,28 +63,28 @@ const perPageOptions = [5, 10, 20, 50, 100]
 
 // --- State untuk Modal Konfirmasi Hapus Single ---
 const showDeleteConfirmModal = ref(false)
-const teacherToDeleteId = ref<string | null>(null)
-const teacherToDeleteName = ref<string | null>(null) // Untuk menampilkan nama di modal
-const isDeleting = ref(false) // Untuk spinner tombol single delete
+const studentToDeleteId = ref<string | null>(null)
+const studentToDeleteName = ref<string | null>(null)
+const isDeleting = ref(false)
 
 // --- NEW STATE: Untuk Penghapusan Massal ---
-const selectedTeacherIds = ref<string[]>([]) // Array ID guru yang dipilih dari TableComponent
+const selectedStudentIds = ref<string[]>([])
 const showBulkDeleteConfirmModal = ref(false)
-const isBulkDeleting = ref(false) // Untuk spinner tombol bulk delete
+const isBulkDeleting = ref(false)
 
 // Computed untuk mengontrol apakah tombol bulk delete aktif
-const canBulkDelete = computed(() => selectedTeacherIds.value.length > 0)
+const canBulkDelete = computed(() => selectedStudentIds.value.length > 0)
 
 // Computed untuk status "Pilih Semua" di tingkat parent (untuk tombol "Pilih Semua")
-// Mengambil semua ID guru dari halaman saat ini
-const allCurrentPageTeacherIds = computed(() =>
-  teachers.value.map((t) => t.id).filter((id) => id != null),
+// Mengambil semua ID siswa dari halaman saat ini
+const allCurrentPageStudentIds = computed(() =>
+  students.value.map((s) => s.id).filter((id) => id != null),
 )
 
-// Memeriksa apakah semua guru di halaman saat ini sudah terpilih
+// Memeriksa apakah semua siswa di halaman saat ini sudah terpilih
 const allCurrentPageSelected = computed(() => {
-  if (allCurrentPageTeacherIds.value.length === 0) return false
-  return allCurrentPageTeacherIds.value.every((id) => selectedTeacherIds.value.includes(id))
+  if (allCurrentPageStudentIds.value.length === 0) return false
+  return allCurrentPageStudentIds.value.every((id) => selectedStudentIds.value.includes(id))
 })
 
 // --- NEW STATE: Untuk Import ---
@@ -95,15 +95,17 @@ const importValidationErrors = ref<ImportValidationError[]>([]);
 
 // --- Table Headers Configuration ---
 const tableHeaders = [
-  { key: 'name', label: t('teacher.name'), sortable: true, filterable: true },
-  { key: 'gender', label: t('teacher.gender'), sortable: true, filterable: true },
+  { key: 'name', label: t('student.name'), sortable: true, filterable: true },
+  { key: 'gender', label: t('student.gender'), sortable: true, filterable: true },
+  { key: 'nisn', label: t('student.nisn'), sortable: true, filterable: true },
+  { key: 'nis', label: t('student.nis'), sortable: true, filterable: true },
 ]
 
 // --- API Fetching Logic ---
-const loadTeachers = async (page: number = 1) => {
+const loadStudents = async (page: number = 1) => {
   if (!isAuthenticated()) {
     error.value = t('common.you_must_login')
-    teachers.value = []
+    students.value = []
     paginationMeta.value = null
     paginationLinks.value = null
     return
@@ -117,10 +119,10 @@ const loadTeachers = async (page: number = 1) => {
       sortParam = sortDirection.value === 'desc' ? `-${currentSortKey.value}` : currentSortKey.value
     }
 
-    const response = await fetchTeachers(page, itemsPerPage.value, appliedFilters.value, sortParam)
+    const response = await fetchStudents(page, itemsPerPage.value, appliedFilters.value, sortParam)
 
     if (response && response.data) {
-      teachers.value = response.data
+      students.value = response.data
       paginationMeta.value = response.meta
       paginationLinks.value = response.links
       currentPage.value = parseInt(response.meta.current_page || '1')
@@ -133,7 +135,7 @@ const loadTeachers = async (page: number = 1) => {
     } else {
       error.value = err.response?.data?.message || t('common.api_failed')
     }
-    teachers.value = []
+    students.value = []
     paginationMeta.value = null
     paginationLinks.value = null
   } finally {
@@ -156,8 +158,8 @@ const handleApplyFilters = () => {
   if (hasFilterChanged) {
     appliedFilters.value = newAppliedFilters
     currentPage.value = 1
-    selectedTeacherIds.value = []
-    loadTeachers(currentPage.value)
+    selectedStudentIds.value = []
+    loadStudents(currentPage.value)
   }
 }
 
@@ -166,8 +168,8 @@ const handleTableSort = (key: string, direction: 'asc' | 'desc' | '') => {
   currentSortKey.value = key
   sortDirection.value = direction
   currentPage.value = 1
-  selectedTeacherIds.value = []
-  loadTeachers(currentPage.value)
+  selectedStudentIds.value = []
+  loadStudents(currentPage.value)
 }
 
 // --- Pagination Actions ---
@@ -175,82 +177,82 @@ const goToPage = async (pageUrl: string | null) => {
   if (pageUrl) {
     const url = new URL(pageUrl)
     const page = parseInt(url.searchParams.get('page') || '1')
-    selectedTeacherIds.value = []
-    await loadTeachers(page)
+    selectedStudentIds.value = []
+    await loadStudents(page)
   }
 }
 
 // --- CRUD Actions ---
-const handleEdit = (teacherId: string) => {
-  router.push({ name: 'teacher.edit', params: { id: teacherId } })
+const handleEdit = (studentId: string) => {
+  router.push({ name: 'student.edit', params: { id: studentId } })
 }
 
 // --- SINGLE DELETE LOGIC ---
-const openDeleteConfirmModal = (teacher: Teacher) => {
-  teacherToDeleteId.value = teacher.id
-  teacherToDeleteName.value = teacher.name
+const openDeleteConfirmModal = (student: Student) => {
+  studentToDeleteId.value = student.id
+  studentToDeleteName.value = student.name
   showDeleteConfirmModal.value = true
 }
 
 const confirmDelete = async () => {
-  if (!teacherToDeleteId.value) return
+  if (!studentToDeleteId.value) return
 
   isDeleting.value = true
   try {
-    await deleteTeacher(teacherToDeleteId.value)
-    const totalTeachersAfterDelete = paginationMeta.value
+    await deleteStudent(studentToDeleteId.value)
+    const totalStudentsAfterDelete = paginationMeta.value
       ? parseInt(paginationMeta.value.total) - 1
       : 0
     const newCurrentPage =
       paginationMeta.value &&
-        totalTeachersAfterDelete > 0 &&
+        totalStudentsAfterDelete > 0 &&
         currentPage.value > 1 &&
-        teachers.value.length === 1
+        students.value.length === 1
         ? currentPage.value - 1
         : currentPage.value
-    await loadTeachers(newCurrentPage)
-    toast.success(t('teacher.deleted_success'))
-    selectedTeacherIds.value = selectedTeacherIds.value.filter(
-      (id) => id !== teacherToDeleteId.value,
+    await loadStudents(newCurrentPage) // Diubah ke loadStudents
+    toast.success(t('student.deleted_success'))
+    selectedStudentIds.value = selectedStudentIds.value.filter(
+      (id) => id !== studentToDeleteId.value,
     )
   } catch (err: any) {
     if (err.response && err.response.status === 403) {
-      Swal.fire(t('common.error'), t('teacher.permission_to_delete'), 'error'); // Use Swal for permission error
+      Swal.fire(t('common.error'), t('student.permission_to_delete'), 'error');
     } else {
-      Swal.fire(t('common.error'), err.response?.data?.message || t('common.api_failed'), 'error'); // Use Swal for API failed
+      Swal.fire(t('common.error'), err.response?.data?.message || t('common.api_failed'), 'error');
     }
   } finally {
     isDeleting.value = false
     showDeleteConfirmModal.value = false
-    teacherToDeleteId.value = null
-    teacherToDeleteName.value = null
+    studentToDeleteId.value = null
+    studentToDeleteName.value = null
   }
 }
 
 const cancelDelete = () => {
   showDeleteConfirmModal.value = false
-  teacherToDeleteId.value = null
-  teacherToDeleteName.value = null
+  studentToDeleteId.value = null
+  studentToDeleteName.value = null
 }
 
 // --- NEW: BULK DELETE LOGIC ---
-// Handler untuk update selectedTeacherIds dari TableComponent
+// Handler untuk update selectedStudentIds dari TableComponent
 const handleSelectedItemsChange = (selectedIds: string[]) => {
-  selectedTeacherIds.value = selectedIds
+  selectedStudentIds.value = selectedIds
 }
 
-const selectAllTeachers = () => {
+const selectAllStudents = () => {
   const newSelectedIds = [
-    ...new Set([...selectedTeacherIds.value, ...allCurrentPageTeacherIds.value]),
+    ...new Set([...selectedStudentIds.value, ...allCurrentPageStudentIds.value]),
   ]
-  selectedTeacherIds.value = newSelectedIds
+  selectedStudentIds.value = newSelectedIds
 }
 
-const deselectAllTeachers = () => {
-  const newSelectedIds = selectedTeacherIds.value.filter(
-    (id) => !allCurrentPageTeacherIds.value.includes(id),
+const deselectAllStudents = () => {
+  const newSelectedIds = selectedStudentIds.value.filter(
+    (id) => !allCurrentPageStudentIds.value.includes(id),
   )
-  selectedTeacherIds.value = newSelectedIds
+  selectedStudentIds.value = newSelectedIds
 }
 
 const openBulkDeleteConfirmModal = () => {
@@ -258,33 +260,33 @@ const openBulkDeleteConfirmModal = () => {
 }
 
 const confirmBulkDelete = async () => {
-  if (selectedTeacherIds.value.length === 0) return
+  if (selectedStudentIds.value.length === 0) return
 
   isBulkDeleting.value = true
   try {
-    const idsToDelete = [...selectedTeacherIds.value]
-    await deleteMultipleTeachers(idsToDelete)
+    const idsToDelete = [...selectedStudentIds.value]
+    await deleteMultipleStudents(idsToDelete)
 
-    let totalTeachersAfterDelete = paginationMeta.value
+    let totalStudentsAfterDelete = paginationMeta.value
       ? parseInt(paginationMeta.value.total) - idsToDelete.length
       : 0
     let newCurrentPage = currentPage.value
 
-    const currentTeachersOnPage = teachers.value.filter((t) => idsToDelete.includes(t.id)).length
-    if (currentTeachersOnPage === teachers.value.length && newCurrentPage > 1) {
+    const currentStudentsOnPage = students.value.filter((s) => idsToDelete.includes(s.id)).length
+    if (currentStudentsOnPage === students.value.length && newCurrentPage > 1) {
       newCurrentPage--
-    } else if (totalTeachersAfterDelete === 0 && newCurrentPage > 1) {
+    } else if (totalStudentsAfterDelete === 0 && newCurrentPage > 1) {
       newCurrentPage = 1
     }
 
-    selectedTeacherIds.value = []
-    await loadTeachers(newCurrentPage)
-    toast.success(t('teacher.bulk_delete_success')) // Use new specific key
+    selectedStudentIds.value = []
+    await loadStudents(newCurrentPage) // Diubah ke loadStudents
+    toast.success(t('student.bulk_delete_success'))
   } catch (err: any) {
     if (err.response && err.response.status === 403) {
-      Swal.fire(t('common.error'), t('teacher.permission_to_delete'), 'error'); // Use Swal
+      Swal.fire(t('common.error'), t('student.permission_to_delete'), 'error');
     } else {
-      Swal.fire(t('common.error'), err.response?.data?.message || t('teacher.bulk_delete_failed'), 'error'); // Use Swal
+      Swal.fire(t('common.error'), err.response?.data?.message || t('student.bulk_delete_failed'), 'error');
     }
   } finally {
     isBulkDeleting.value = false
@@ -296,12 +298,12 @@ const cancelBulkDelete = () => {
   showBulkDeleteConfirmModal.value = false
 }
 
-const handleCreateTeacher = () => {
-  router.push({ name: 'teacher.create' })
+const handleCreateStudent = () => {
+  router.push({ name: 'student.create' })
 }
 
-// --- FUNGSI BARU: Export Teachers ---
-const handleExportTeachers = async () => {
+// --- FUNGSI BARU: Export Students ---
+const handleExportStudents = async () => {
   try {
     Swal.fire({
       title: t('common.exporting_data'),
@@ -313,22 +315,22 @@ const handleExportTeachers = async () => {
       showConfirmButton: false,
     });
 
-    const blob = await exportTeachers();
+    const blob = await exportStudents(); // Diubah ke exportStudents
 
     const url = window.URL.createObjectURL(new Blob([blob]));
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', 'teachers.xlsx');
+    link.setAttribute('download', 'students.xlsx');
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
 
     Swal.close();
-    Swal.fire(t('common.success'), t('teacher.export_success'), 'success');
+    Swal.fire(t('common.success'), t('student.export_success'), 'success');
   } catch (error) {
     Swal.close();
-    let errorMessage = t('teacher.export_failed');
+    let errorMessage = t('student.export_failed');
     if (error.response && error.response.data instanceof Blob) {
       const reader = new FileReader();
       reader.onload = function () {
@@ -336,14 +338,14 @@ const handleExportTeachers = async () => {
           const errorObj = JSON.parse(reader.result as string);
           errorMessage = errorObj.message || errorMessage;
         } catch (e) {
-          errorMessage = t('teacher.export_failed') + ': ' + reader.result;
+          errorMessage = t('student.export_failed') + ': ' + reader.result;
         }
       };
       reader.readAsText(error.response.data);
     } else if (error.message) {
       errorMessage = error.message;
     }
-    Swal.fire(t('common.error'), errorMessage, 'error'); // Use i18n for title
+    Swal.fire(t('common.error'), errorMessage, 'error');
   }
 };
 
@@ -353,7 +355,7 @@ const openImportModal = () => {
   fileToImport.value = null;
   importValidationErrors.value = [];
   isImporting.value = false;
-  const fileInput = document.getElementById('importFileInput') as HTMLInputElement; // Corrected ID
+  const fileInput = document.getElementById('importFileInput') as HTMLInputElement;
   if (fileInput) fileInput.value = '';
 };
 
@@ -361,7 +363,7 @@ const cancelImport = () => {
   showImportModal.value = false;
   fileToImport.value = null;
   importValidationErrors.value = [];
-  const fileInput = document.getElementById('importFileInput') as HTMLInputElement; // Corrected ID
+  const fileInput = document.getElementById('importFileInput') as HTMLInputElement;
   if (fileInput) fileInput.value = '';
 };
 
@@ -387,22 +389,22 @@ const handleDownloadTemplate = async () => {
       showConfirmButton: false,
     });
 
-    const blob = await downloadTeacherTemplate();
+    const blob = await downloadStudentTemplate(); // Diubah ke downloadStudentTemplate
 
     const url = window.URL.createObjectURL(new Blob([blob]));
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', 'teacher_import_template.xlsx');
+    link.setAttribute('download', 'student_import_template.xlsx');
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
 
     Swal.close();
-    Swal.fire(t('common.success'), t('teacher.template_download_success'), 'success');
+    Swal.fire(t('common.success'), t('student.template_download_success'), 'success');
   } catch (error: any) {
     Swal.close();
-    let errorMessage = t('teacher.template_download_failed');
+    let errorMessage = t('student.template_download_failed');
     if (error.response && error.response.data instanceof Blob) {
       const reader = new FileReader();
       reader.onload = function () {
@@ -410,20 +412,20 @@ const handleDownloadTemplate = async () => {
           const errorObj = JSON.parse(reader.result as string);
           errorMessage = errorObj.message || errorMessage;
         } catch (e) {
-          errorMessage = t('teacher.template_download_failed') + ': ' + reader.result;
+          errorMessage = t('student.template_download_failed') + ': ' + reader.result;
         }
       };
       reader.readAsText(error.response.data);
     } else if (error.message) {
       errorMessage = error.message;
     }
-    Swal.fire(t('common.error'), errorMessage, 'error'); // Use i18n for title
+    Swal.fire(t('common.error'), errorMessage, 'error');
   }
 };
 
 const handleSubmitImport = async () => {
   if (!fileToImport.value) {
-    Swal.fire(t('common.warning'), t('teacher.select_file_first'), 'warning');
+    Swal.fire(t('common.warning'), t('student.select_file_first'), 'warning');
     return;
   }
 
@@ -441,54 +443,54 @@ const handleSubmitImport = async () => {
       showConfirmButton: false,
     });
 
-    const response = await importTeachers(fileToImport.value);
+    const response = await importStudents(fileToImport.value);
 
     Swal.close();
     // Check if response has 'data_count' or 'imported_count'
     const importedCount = response.data_count || response.imported_count || 0;
     Swal.fire(
       t('common.success'),
-      t('teacher.import_success', { count: importedCount }), // Pass count for i18n
+      t('student.import_success', { count: importedCount }),
       'success'
     );
     cancelImport();
-    loadTeachers();
+    loadStudents(); // Diubah ke loadStudents
   } catch (error: any) {
     Swal.close();
     isImporting.value = false;
 
-    let errorMessage = t('teacher.import_failed_general'); // Default general error message
-    
-    // Handle specific validation errors from backend (e.g., from TeacherTemplateValidation or TeacherImport)
+    let errorMessage = t('student.import_failed_general');
+
+    // Handle specific validation errors from backend (e.g., from StudentTemplateValidation or StudentImport)
     if (error.response && error.response.data) {
-        if (error.response.data.message) {
-            errorMessage = error.response.data.message;
-        }
-        // If there are detailed errors (e.g., from TeacherImport's validation failures)
-        if (error.response.data.errors && Array.isArray(error.response.data.errors)) {
-            importValidationErrors.value = error.response.data.errors;
-            errorMessage = error.response.data.message || t('teacher.import_validation_errors');
+      if (error.response.data.message) {
+        errorMessage = error.response.data.message;
+      }
+      // If there are detailed errors (e.g., from StudentImport's validation failures)
+      if (error.response.data.errors && Array.isArray(error.response.data.errors)) {
+        importValidationErrors.value = error.response.data.errors;
+        errorMessage = error.response.data.message || t('student.import_validation_errors');
 
-            let errorDetailsHtml = `<p>${errorMessage}</p><ul class="text-left mt-2 space-y-1 text-sm">`;
-            importValidationErrors.value.forEach((err: ImportValidationError) => {
-                errorDetailsHtml += `<li><strong>${t('common.row')} ${err.row}:</strong> ${err.errors.join(', ')}</li>`;
-            });
-            errorDetailsHtml += '</ul>';
+        let errorDetailsHtml = `<p>${errorMessage}</p><ul class="text-left mt-2 space-y-1 text-sm">`;
+        importValidationErrors.value.forEach((err: ImportValidationError) => {
+          errorDetailsHtml += `<li><strong>${t('common.row')} ${err.row}:</strong> ${err.errors.join(', ')}</li>`;
+        });
+        errorDetailsHtml += '</ul>';
 
-            Swal.fire({
-                title: t('common.error'), // General error title
-                html: errorDetailsHtml,
-                icon: 'error',
-                confirmButtonText: t('common.ok'),
-                width: '600px' // Adjust width for better readability if many errors
-            });
-            return; // Exit here if detailed errors are handled
-        }
+        Swal.fire({
+          title: t('common.error'), // Tetap common
+          html: errorDetailsHtml,
+          icon: 'error',
+          confirmButtonText: t('common.ok'),
+          width: '600px' // Adjust width for better readability if many errors
+        });
+        return; // Exit here if detailed errors are handled
+      }
     } else if (error.message) {
-      errorMessage = error.message; // Generic JS error message
+      errorMessage = error.message;
     }
 
-    Swal.fire(t('common.error'), errorMessage, 'error'); // Fallback for simple errors
+    Swal.fire(t('common.error'), errorMessage, 'error'); // Tetap common
   } finally {
     isImporting.value = false;
   }
@@ -497,35 +499,35 @@ const handleSubmitImport = async () => {
 // --- Watcher untuk itemsPerPage ---
 watch(itemsPerPage, () => {
   currentPage.value = 1
-  selectedTeacherIds.value = []
-  loadTeachers(currentPage.value)
+  selectedStudentIds.value = []
+  loadStudents(currentPage.value) // Diubah ke loadStudents
 })
 
 // --- Lifecycle Hook ---
 onMounted(() => {
-  loadTeachers()
+  loadStudents() // Diubah ke loadStudents
 
-  window.Echo.channel('teachers')
-    .listen('.teacher.added', (e) => {
-      loadTeachers(currentPage.value)
-      toast.success(`Guru ${e.teacher.name} telah ditambahkan!`) // This toast message is hardcoded, consider i18n if needed
+  window.Echo.channel('students')
+    .listen('.student.created', (e) => {
+      loadStudents(currentPage.value) // Diubah ke loadStudents
+      toast.success(t('student.created_success_toast', { name: e.student.name }))
     })
-    .listen('.teacher.updated', (e) => {
-      const index = teachers.value.findIndex((t) => t.id === e.teacher.id)
+    .listen('.student.updated', (e) => {
+      const index = students.value.findIndex((s) => s.id === e.student.id)
       if (index !== -1) {
-        teachers.value[index] = e.teacher
+        students.value[index] = e.student
       }
-      toast.success(`Guru ${e.teacher.name} telah diperbarui!`) // This toast message is hardcoded
+      toast.success(t('student.updated_success_toast', { name: e.student.name }))
     })
-    .listen('.teacher.deleted', (e) => {
-      teachers.value = teachers.value.filter((t) => t.id !== e.teacher_id)
-      toast.success(`Guru telah dihapus!`) // This toast message is hardcoded
-      loadTeachers(currentPage.value)
+    .listen('.student.deleted', (e) => {
+      students.value = students.value.filter((s) => s.id !== e.student_id)
+      toast.success(t('student.deleted_success_toast'))
+      loadStudents(currentPage.value) // Diubah ke loadStudents
     })
 })
 
 onBeforeUnmount(() => {
-  window.Echo.leaveChannel('teachers')
+  window.Echo.leaveChannel('students')
 })
 </script>
 
@@ -534,7 +536,7 @@ onBeforeUnmount(() => {
     <PageBreadcrumb :pageTitle="currentPageTitle" />
     <div
       class="min-h-screen rounded-2xl border border-gray-200 bg-white px-5 py-7 dark:border-gray-800 dark:bg-white/[0.03] xl:px-10 xl:py-12">
-      <h1 class="text-3xl font-bold text-gray-800 mb-6">{{ t('teacher.management') }}</h1>
+      <h1 class="text-3xl font-bold text-gray-800 mb-6">{{ t('student.management') }}</h1>
 
       <div v-if="error"
         class="error-message bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
@@ -563,49 +565,45 @@ onBeforeUnmount(() => {
 
           <!-- Bulk Delete Button - only visible if items selected and has permission -->
           <div v-if="canBulkDelete" class="flex items-center space-x-2">
-            <ButtonComponent v-if="authStore.can('delete-teacher')" variant="danger" size="sm"
+            <ButtonComponent v-if="authStore.can('delete-student')" variant="danger" size="sm"
               @click="openBulkDeleteConfirmModal" :loading="isBulkDeleting">
-              {{ t('common.bulk_delete') }} ({{ selectedTeacherIds.length }})
+              {{ t('common.bulk_delete') }} ({{ selectedStudentIds.length }})
             </ButtonComponent>
           </div>
         </div>
 
-        <!-- Right Container: Create Teacher Button -->
+        <!-- Right Container: Create Student Button -->
         <div class="flex items-center w-full sm:w-auto justify-end space-x-2">
           <!-- Import Data Button -->
-          <ButtonComponent 
-            variant="info"
-            size="md"
-            @click="openImportModal"
-            >
-            {{ t('teacher.import_data') }}
+          <ButtonComponent variant="info" size="md" @click="openImportModal">
+            {{ t('student.import_data') }}
           </ButtonComponent>
 
           <!-- Export Data Button -->
-          <ButtonComponent variant="success" size="md" @click="handleExportTeachers">
-            {{ t('teacher.export_data') }}
+          <ButtonComponent variant="success" size="md" @click="handleExportStudents">
+            {{ t('student.export_data') }}
           </ButtonComponent>
 
-          <!-- Create Teacher Button -->
-          <ButtonComponent v-if="authStore.can('create-teacher')" variant="primary" size="md"
-            @click="handleCreateTeacher">
+          <!-- Create Student Button -->
+          <ButtonComponent v-if="authStore.can('create-student')" variant="primary" size="md"
+            @click="handleCreateStudent">
             {{ t('common.create') }}
           </ButtonComponent>
         </div>
       </div>
 
-      <TableComponent :headers="tableHeaders" :items="teachers" :is-loading="isLoading" :items-per-page="itemsPerPage"
+      <TableComponent :headers="tableHeaders" :items="students" :is-loading="isLoading" :items-per-page="itemsPerPage"
         :empty-message="t('common.no_data')" v-model:modelValueFilters="columnFilters"
         :current-sort-key="currentSortKey" :sort-direction="sortDirection" @sort="handleTableSort"
-        @apply-filters="handleApplyFilters" :selectedItems="selectedTeacherIds"
+        @apply-filters="handleApplyFilters" :selectedItems="selectedStudentIds"
         @update:selectedItems="handleSelectedItemsChange">
         <template #actionsHeader>{{ t('common.actions') }}</template>
 
         <template #cell-gender="{ value }">
           <span :class="{
             'px-2 inline-flex text-xs leading-5 font-semibold rounded-full': true,
-            'bg-blue-100 text-blue-800': value === 'L', // Compare with 'L' as returned by backend
-            'bg-pink-100 text-pink-800': value === 'P', // Compare with 'P' as returned by backend
+            'bg-blue-100 text-blue-800': value === 'L',
+            'bg-pink-100 text-pink-800': value === 'P',
           }">
             {{ value === 'L' ? t('common.male') : t('common.female') }}
           </span>
@@ -614,10 +612,12 @@ onBeforeUnmount(() => {
         <template #actions="{ item }">
           <div class="flex justify-end space-x-2">
             <ButtonGroupComponent>
-              <ButtonComponent v-if="authStore.can('update-teacher')" variant="warning" @click="handleEdit(item.id)">{{
-                t('common.edit') }}</ButtonComponent>
-              <ButtonComponent v-if="authStore.can('delete-teacher')" variant="danger"
-                @click="openDeleteConfirmModal(item as Teacher)">{{ t('common.delete') }}</ButtonComponent>
+              <ButtonComponent v-if="authStore.can('update-student')" variant="warning" @click="handleEdit(item.id)">
+                {{ t('common.edit') }}
+              </ButtonComponent>
+              <ButtonComponent v-if="authStore.can('delete-student')" variant="danger"
+                @click="openDeleteConfirmModal(item as Student)">{{ t('common.delete') }}
+              </ButtonComponent>
             </ButtonGroupComponent>
           </div>
         </template>
@@ -626,14 +626,14 @@ onBeforeUnmount(() => {
       <div class="mt-8 justify-between items-center">
         <TablePagination :meta="paginationMeta" :links="paginationLinks" @go-to-page="goToPage" />
       </div>
-      
+
       <!-- Single Delete Confirmation Modal -->
       <ModalComponent v-model="showDeleteConfirmModal" :title="t('common.confirm')" type="danger" max-width="sm"
         :show-close-button="true" :backdrop-dismiss="true" @close="cancelDelete">
         <p>
-          <i18n-t keypath="teacher.delete_confirmation_single" tag="span">
+          <i18n-t keypath="student.delete_confirmation_single" tag="span">
             <template v-slot:name>
-              <span class="font-semibold text-red-700">{{ teacherToDeleteName }}</span>
+              <span class="font-semibold text-red-700">{{ studentToDeleteName }}</span>
             </template>
           </i18n-t>
         </p>
@@ -648,13 +648,12 @@ onBeforeUnmount(() => {
       </ModalComponent>
 
       <!-- Bulk Delete Confirmation Modal -->
-      <ModalComponent v-model="showBulkDeleteConfirmModal" :title="t('common.confirm')" type="danger"
-        max-width="sm" :show-close-button="!isBulkDeleting" :backdrop-dismiss="!isBulkDeleting"
-        @close="cancelBulkDelete">
+      <ModalComponent v-model="showBulkDeleteConfirmModal" :title="t('common.confirm')" type="danger" max-width="sm"
+        :show-close-button="!isBulkDeleting" :backdrop-dismiss="!isBulkDeleting" @close="cancelBulkDelete">
         <p>
-          <i18n-t keypath="teacher.delete_confirmation_bulk" tag="span">
+          <i18n-t keypath="student.delete_confirmation_bulk" tag="span">
             <template v-slot:count>
-              <span class="font-semibold text-red-700">{{ selectedTeacherIds.length }}</span>
+              <span class="font-semibold text-red-700">{{ selectedStudentIds.length }}</span>
             </template>
           </i18n-t>
         </p>
@@ -668,62 +667,33 @@ onBeforeUnmount(() => {
         </template>
       </ModalComponent>
 
-      <!-- Modal Import Data Teacher -->
-      <ModalComponent
-        v-model="showImportModal"
-        :title="t('teacher.import_title')"
-        type="info"
-        max-width="md"
-        :show-close-button="!isImporting"
-        :backdrop-dismiss="!isImporting"
-        @close="cancelImport"
-      >
-        <p class="mb-4">{{ t('teacher.import_description') }}</p>
+      <!-- Modal Import Data Student -->
+      <ModalComponent v-model="showImportModal" :title="t('student.import_title')" type="info" max-width="md"
+        :show-close-button="!isImporting" :backdrop-dismiss="!isImporting" @close="cancelImport">
+        <p class="mb-4">{{ t('student.import_description') }}</p>
 
         <div class="mb-4">
           <label for="importFileInput" class="block text-sm font-medium text-gray-700 mb-2">
-            {{ t('teacher.choose_excel_file') }}
+            {{ t('student.choose_excel_file') }}
           </label>
-          <input
-            type="file"
-            id="importFileInput"
-            @change="handleFileChange"
-            accept=".xls,.xlsx"
-            class="block w-full text-sm text-gray-500
+          <input type="file" id="importFileInput" @change="handleFileChange" accept=".xls,.xlsx" class="block w-full text-sm text-gray-500
                    file:mr-4 file:py-2 file:px-4
                    file:rounded-full file:border-0
                    file:text-sm file:font-semibold
                    file:bg-indigo-50 file:text-indigo-700
-                   hover:file:bg-indigo-100"
-            :disabled="isImporting"
-          />
+                   hover:file:bg-indigo-100" :disabled="isImporting" />
           <p v-if="fileToImport" class="mt-2 text-sm text-gray-600">
-            {{ t('teacher.selected_file') }}: <span class="font-medium">{{ fileToImport.name }}</span>
+            {{ t('student.selected_file') }}: <span class="font-medium">{{ fileToImport.name }}</span>
           </p>
         </div>
         <template #actions>
-          <ButtonComponent
-            variant="secondary"
-            size="sm"
-            @click="cancelImport"
-            :disabled="isImporting"
-          >
+          <ButtonComponent variant="secondary" size="sm" @click="cancelImport" :disabled="isImporting">
             {{ t('common.cancel') }}
           </ButtonComponent>
-          <ButtonComponent
-            variant="primary"
-            size="sm"
-            @click="handleDownloadTemplate"
-            :disabled="isImporting"
-          >
-            {{ t('teacher.download_template') }}
+          <ButtonComponent variant="primary" size="sm" @click="handleDownloadTemplate" :disabled="isImporting">
+            {{ t('student.download_template') }}
           </ButtonComponent>
-          <ButtonComponent
-            variant="success"
-            size="sm"
-            @click="handleSubmitImport"
-            :loading="isImporting"
-          >
+          <ButtonComponent variant="success" size="sm" @click="handleSubmitImport" :loading="isImporting">
             {{ t('common.submit_excel') }}
           </ButtonComponent>
         </template>
