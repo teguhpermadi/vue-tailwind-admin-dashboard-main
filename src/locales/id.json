@@ -50,7 +50,7 @@
     "edit": "Ubah Guru",
     "name": "Nama Guru",
     "gender": "Jenis Kelamin Guru",
-    "NIP" : "NIP",
+    "nip" : "NIP",
     "subject_count": "Jumlah Mata Pelajaran",
     "name_placeholder": "Masukkan nama guru",
     "gender_placeholder": "Pilih jenis kelamin guru",
