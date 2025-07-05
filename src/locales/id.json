@@ -50,9 +50,11 @@
     "edit": "Ubah Guru",
     "name": "Nama Guru",
     "gender": "Jenis Kelamin Guru",
+    "NIP" : "NIP",
     "subject_count": "Jumlah Mata Pelajaran",
     "name_placeholder": "Masukkan nama guru",
     "gender_placeholder": "Pilih jenis kelamin guru",
+    "nip_placeholder" : "Masukkan NIP siswa (18 digit)",
 
     "created_success": "Guru berhasil ditambahkan!",
     "updated_success": "Guru berhasil diperbarui!",
@@ -159,7 +161,8 @@
     "min_length": "{field} minimal harus {min} karakter.",
     "invalid_gender": "Jenis kelamin tidak valid dipilih.",
     "invalid_nisn" : "Format NISN tidak valid.",
-    "invalid_nis" : "Format NIS tidak valid."
+    "invalid_nis" : "Format NIS tidak valid.",
+    "invalid_nip" : "Format NIP tidak valid."
   },
   "error": {
     "general_validation_error": "Ada kesalahan validasi. Mohon periksa input Anda."

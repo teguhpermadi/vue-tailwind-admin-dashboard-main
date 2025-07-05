@@ -11,8 +11,8 @@ export const teacherSchema = () => {
   return z.object({
     // Aturan validasi untuk 'name'
     name: z.string()
-      .min(1, t('validation.required', { field: t('common.name') })) // Gunakan terjemahan
-      .min(3, t('validation.min_length', { field: t('common.name'), min: 3 })), // Gunakan terjemahan
+      .min(1, t('validation.required', { field: t('teacher.name') })) // Gunakan terjemahan
+      .min(3, t('validation.min_length', { field: t('teacher.name'), min: 3 })), // Gunakan terjemahan
 
     // Aturan validasi untuk 'gender'
     gender: z.enum(['male', 'female'], {
@@ -24,6 +24,11 @@ export const teacherSchema = () => {
         return { message: ctx.defaultError };
       },
     }),
+
+    // aturan validasi untuk 'nip'
+    nip: z.string()
+      .min(1, t('validation.required', { field: t('teacher.nip') })) // Gunakan terjemahan
+      .regex(/^\d{18}$/, t('validation.invalid_nip')), // Asumsi NIP adalah 18 digit angka
   });
 };
 

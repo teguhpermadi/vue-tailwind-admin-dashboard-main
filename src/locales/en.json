@@ -50,9 +50,11 @@
     "edit": "Edit Teacher",
     "name": "Teacher Name",
     "gender": "Teacher Gender",
+    "nip" : "Teacher NIP",
     "subject_count": "Subject Count",
     "name_placeholder": "Enter teacher name",
     "gender_placeholder": "Select teacher gender",
+    "nip_placeholder" : "Enter NIP (18 digits)",
 
     "created_success": "Teacher added successfully!",
     "updated_success": "Teacher updated successfully!",
@@ -159,7 +161,8 @@
     "min_length": "{field} must be at least {min} characters.",
     "invalid_gender": "Invalid gender selected.",
     "invalid_nisn" : "Invalid NISN format.",
-    "invalid_nis" : "Invalid NIS format."
+    "invalid_nis" : "Invalid NIS format.",
+    "invalid_nip" : "Invalid NIP format."
   },
   "error": {
     "general_validation_error": "There are validation errors. Please check your input."

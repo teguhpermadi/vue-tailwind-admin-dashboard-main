@@ -46,19 +46,14 @@ const {
   initialValues: {
       name: '',
       gender: 'male',
+      nip: '',
   }
 });
 
 // Definisikan field form menggunakan `defineField`
 const [name, nameAttrs] = defineField('name');
 const [gender, genderAttrs] = defineField('gender');
-
-// Hapus state lama yang sekarang ditangani oleh VeeValidate atau sudah tidak relevan:
-// const teacherData = ref<Partial<Teacher>>({}); // Diganti dengan setValues dan nilai form internal VeeValidate
-// const isSaving = ref(false); // Diganti oleh `isSubmitting`
-// const generalError = ref<string | null>(null); // Diganti oleh toast dan `errors` VeeValidate
-// const successMessage = ref<string | null>(null); // Diganti oleh toast
-// const validationErrors = ref<Record<string, string[]>>({}); // Diganti oleh `errors` dari VeeValidate
+const [nip, nipAttrs] = defineField('nip');
 
 // Watcher untuk merespons perubahan ID di URL
 watch(
@@ -84,6 +79,7 @@ const fetchTeacher = async () => {
       setValues({
         name: response.data.name,
         gender: response.data.gender,
+        nip: response.data.nip,
         // Pastikan semua properti yang ada di `TeacherFormValues` Zod diisi di sini
       });
       currentPageTitle.value = `Edit: ${response.data.name}`;
@@ -193,6 +189,17 @@ onMounted(() => {
             ]"
             :placeholder="t('teacher.gender_placeholder')"
             :error="errors.gender ? [errors.gender] : []"
+            required
+          />
+
+          <InputField
+            id="teacherNip"
+            :label="t('teacher.nip')"
+            type="number"
+            v-model="nip"          
+            v-bind="nipAttrs"       
+            :placeholder="t('teacher.nip_placeholder')"
+            :errors="errors.nip ? [errors.nip] : []"    
             required
           />
         </div>

@@ -40,6 +40,7 @@ const {
   initialValues: { // Atur nilai awal form. Penting untuk SelectInput agar default 'male' terpilih.
     name: '',
     gender: 'male',
+    nip: '',
   },
 });
 
@@ -48,6 +49,7 @@ const {
 // `[name, nameAttrs]` akan mengembalikan ref `name` (untuk `v-model`) dan objek `nameAttrs` (untuk `v-bind`).
 const [name, nameAttrs] = defineField('name');
 const [gender, genderAttrs] = defineField('gender');
+const [nip, nipAttrs] = defineField('nip');
 
 // Fungsi untuk menangani submit form.
 // `handleSubmit` dari VeeValidate akan secara otomatis memvalidasi form sisi klien.
@@ -126,6 +128,17 @@ const goBack = () => {
             ]"
             :placeholder="t('teacher.gender_placeholder')"
             :error="errors.gender ? [errors.gender] : []"
+            required
+          />
+
+          <InputField
+            id="teacherNip"
+            :label="t('teacher.nip')"
+            type="number"
+            v-model="nip"          
+            v-bind="nipAttrs"       
+            :placeholder="t('teacher.nip_placeholder')"
+            :errors="errors.nip ? [errors.nip] : []"    
             required
           />
         </div>
