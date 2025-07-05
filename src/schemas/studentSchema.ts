@@ -15,7 +15,7 @@ export const studentSchema = () => {
       .min(3, t('validation.min_length', { field: t('common.name'), min: 3 })), // Minimal 3 karakter
 
     // Aturan validasi untuk 'gender' (Jenis Kelamin)
-    gender: z.enum(['L', 'P'], { // Diasumsikan 'L' untuk Laki-laki dan 'P' untuk Perempuan
+    gender: z.enum(['male', 'female'], { // Diasumsikan 'L' untuk Laki-laki dan 'P' untuk Perempuan
       errorMap: (issue, ctx) => {
         if (issue.code === z.ZodIssueCode.invalid_enum_value) {
           return { message: t('validation.invalid_gender') }; // Pesan error untuk jenis kelamin tidak valid

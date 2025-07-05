@@ -109,7 +109,9 @@
     "name_placeholder": "Enter student name",
     "gender_placeholder": "Select student gender",
     "nis": "NIS",
+    "nis_placeholder": "Enter NIS (8 digits)",
     "nisn" : "NISN",
+    "nisn_placeholder" : "Enter NISN (10 digits)",
 
     "created_success": "Student added successfully!",
     "updated_success": "Student updated successfully!",
@@ -155,7 +157,9 @@
   "validation": {
     "required": "{field} is required.",
     "min_length": "{field} must be at least {min} characters.",
-    "invalid_gender": "Invalid gender selected."
+    "invalid_gender": "Invalid gender selected.",
+    "invalid_nisn" : "Invalid NISN format.",
+    "invalid_nis" : "Invalid NIS format."
   },
   "error": {
     "general_validation_error": "There are validation errors. Please check your input."

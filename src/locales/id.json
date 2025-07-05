@@ -109,7 +109,9 @@
     "name_placeholder": "Masukkan nama siswa",
     "gender_placeholder": "Pilih jenis kelamin siswa",
     "nis": "NIS",
+    "nis_placeholder": "Masukkan NIS siswa (8 digit)",
     "nisn" : "NISN",
+    "nisn_placeholder" : "Masukkan NISN siswa (10 digit)",
 
     "created_success": "Siswa berhasil ditambahkan!",
     "updated_success": "Siswa berhasil diperbarui!",
@@ -155,7 +157,9 @@
   "validation": {
     "required": "{field} wajib diisi.",
     "min_length": "{field} minimal harus {min} karakter.",
-    "invalid_gender": "Jenis kelamin tidak valid dipilih."
+    "invalid_gender": "Jenis kelamin tidak valid dipilih.",
+    "invalid_nisn" : "Format NISN tidak valid.",
+    "invalid_nis" : "Format NIS tidak valid."
   },
   "error": {
     "general_validation_error": "Ada kesalahan validasi. Mohon periksa input Anda."

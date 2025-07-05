@@ -35,8 +35,8 @@ export interface Student {
   id: string;
   name: string;
   gender: string;
-  nisn: string; // Nomor Induk Siswa Nasional
-  nis: string;  // Nomor Induk Siswa
+  nisn: number; // Nomor Induk Siswa Nasional
+  nis: number;  // Nomor Induk Siswa
   grades: StudentGrade[]; // Relasi dengan StudentGrade (many-to-many through pivot)
   created_at: string;
   updated_at: string;
