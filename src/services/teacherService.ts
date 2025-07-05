@@ -39,6 +39,7 @@ export interface Teacher {
   nip: string;
   subject_count: string;
   subjects: TeacherSubject[];
+  user?: User | null; // NEW: Tambahkan properti user, bisa null jika belum tertaut
   created_at: string;
   updated_at: string;
   deleted_at?: string;
@@ -86,6 +87,16 @@ export interface ImportErrorResponse {
     errors: ImportValidationError[];
 }
 
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  userable_id: string | null;
+  userable_type: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export type CreateTeacherPayload = Omit<Teacher, 'id' | 'subjects' | 'created_at' | 'updated_at' | 'deleted_at'>;
 export type UpdateTeacherPayload = Partial<Omit<Teacher, 'id' | 'subjects' | 'created_at' | 'updated_at' | 'deleted_at'>>;
 
@@ -110,7 +121,7 @@ export const fetchTeachers = async (
 ): Promise<TeachersResponse> => {
   try {
     const params: Record<string, any> = { page, per_page: perPage };
-
+    
     for (const key in filters) {
       if (Object.prototype.hasOwnProperty.call(filters, key) && filters[key]) {
         params[`filter[${key}]`] = filters[key];
@@ -120,6 +131,9 @@ export const fetchTeachers = async (
     if (sort) { // <--- PERUBAHAN DI SINI: Hanya menambahkan 'sort' jika ada
       params.sort = sort;
     }
+
+    // NEW: Tambahkan parameter 'include' untuk memuat relasi user
+    params.include = 'user'; // Ini akan memuat relasi 'user'
 
     const response = await api.get<TeachersResponse>('/teachers', { params });
     return response.data;
@@ -314,5 +328,15 @@ export const downloadTeacherTemplate = async (): Promise<Blob> => {
   } catch (error: any) {
     console.error('Error downloading teacher template:', error.response?.data || error.message);
     throw error; // Biarkan komponen pemanggil menangani error
+  }
+};
+
+export const generateTeacherLinkToken = async (teacherId: string): Promise<{ message: string; token: string; expires_at: string; linking_url: string }> => {
+  try {
+    const response = await api.post(`/teachers/${teacherId}/generate-link-token`);
+    return response.data;
+  } catch (error: any) {
+    console.error('Error generating teacher link token:', error.response?.data || error.message);
+    throw error;
   }
 };

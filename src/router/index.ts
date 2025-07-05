@@ -89,6 +89,12 @@ const router = createRouter({
       }
     },
     {
+      path: '/link-account',
+      name: 'link.account',
+      component: () => import('@/views/LinkAccountPage.vue'), // Pastikan path benar
+      meta: { requiresAuth: true } // User harus login untuk menggunakan link ini
+    },
+    {
       path: '/',
       name: 'Ecommerce',
       component: () => import('../views/Ecommerce.vue'),

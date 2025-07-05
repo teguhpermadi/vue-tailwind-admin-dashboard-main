@@ -12,6 +12,7 @@ import {
   type PaginationLinks,
   type ImportErrorResponse,
   type ImportValidationError,
+  generateTeacherLinkToken,
 } from '@/services/teacherService'
 import { isAuthenticated } from '@/services/authService'
 import TableComponent from '@/components/tables/TableComponent.vue'
@@ -30,7 +31,7 @@ import { useToast } from 'vue-toastification'
 import { useI18n } from 'vue-i18n'
 
 // Inject SweetAlert2 yang di-provide dari main.ts
-import Swal from 'sweetalert2';
+import Swal from 'sweetalert2'
 
 // Inisialisasi useI18n
 const { t } = useI18n()
@@ -72,6 +73,10 @@ const selectedTeacherIds = ref<string[]>([]) // Array ID guru yang dipilih dari 
 const showBulkDeleteConfirmModal = ref(false)
 const isBulkDeleting = ref(false) // Untuk spinner tombol bulk delete
 
+// state untuk generate link
+const generatedLink = ref<string | null>(null)
+const showLinkModal = ref(false) // Untuk menampilkan modal link
+
 // Computed untuk mengontrol apakah tombol bulk delete aktif
 const canBulkDelete = computed(() => selectedTeacherIds.value.length > 0)
 
@@ -88,10 +93,10 @@ const allCurrentPageSelected = computed(() => {
 })
 
 // --- NEW STATE: Untuk Import ---
-const showImportModal = ref(false);
-const fileToImport = ref<File | null>(null);
-const isImporting = ref(false);
-const importValidationErrors = ref<ImportValidationError[]>([]);
+const showImportModal = ref(false)
+const fileToImport = ref<File | null>(null)
+const isImporting = ref(false)
+const importValidationErrors = ref<ImportValidationError[]>([])
 
 // --- Table Headers Configuration ---
 const tableHeaders = [
@@ -120,6 +125,7 @@ const loadTeachers = async (page: number = 1) => {
     const response = await fetchTeachers(page, itemsPerPage.value, appliedFilters.value, sortParam)
 
     if (response && response.data) {
+      // console.log(response.data)
       teachers.value = response.data
       paginationMeta.value = response.meta
       paginationLinks.value = response.links
@@ -203,9 +209,9 @@ const confirmDelete = async () => {
       : 0
     const newCurrentPage =
       paginationMeta.value &&
-        totalTeachersAfterDelete > 0 &&
-        currentPage.value > 1 &&
-        teachers.value.length === 1
+      totalTeachersAfterDelete > 0 &&
+      currentPage.value > 1 &&
+      teachers.value.length === 1
         ? currentPage.value - 1
         : currentPage.value
     await loadTeachers(newCurrentPage)
@@ -215,9 +221,9 @@ const confirmDelete = async () => {
     )
   } catch (err: any) {
     if (err.response && err.response.status === 403) {
-      Swal.fire(t('common.error'), t('teacher.permission_to_delete'), 'error'); // Use Swal for permission error
+      Swal.fire(t('common.error'), t('teacher.permission_to_delete'), 'error') // Use Swal for permission error
     } else {
-      Swal.fire(t('common.error'), err.response?.data?.message || t('common.api_failed'), 'error'); // Use Swal for API failed
+      Swal.fire(t('common.error'), err.response?.data?.message || t('common.api_failed'), 'error') // Use Swal for API failed
     }
   } finally {
     isDeleting.value = false
@@ -282,9 +288,13 @@ const confirmBulkDelete = async () => {
     toast.success(t('teacher.bulk_delete_success')) // Use new specific key
   } catch (err: any) {
     if (err.response && err.response.status === 403) {
-      Swal.fire(t('common.error'), t('teacher.permission_to_delete'), 'error'); // Use Swal
+      Swal.fire(t('common.error'), t('teacher.permission_to_delete'), 'error') // Use Swal
     } else {
-      Swal.fire(t('common.error'), err.response?.data?.message || t('teacher.bulk_delete_failed'), 'error'); // Use Swal
+      Swal.fire(
+        t('common.error'),
+        err.response?.data?.message || t('teacher.bulk_delete_failed'),
+        'error',
+      ) // Use Swal
     }
   } finally {
     isBulkDeleting.value = false
@@ -306,193 +316,220 @@ const handleExportTeachers = async () => {
     Swal.fire({
       title: t('common.exporting_data'),
       didOpen: () => {
-        Swal.showLoading();
+        Swal.showLoading()
       },
       allowOutsideClick: false,
       allowEscapeKey: false,
       showConfirmButton: false,
-    });
+    })
 
-    const blob = await exportTeachers();
+    const blob = await exportTeachers()
 
-    const url = window.URL.createObjectURL(new Blob([blob]));
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', 'teachers.xlsx');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
+    const url = window.URL.createObjectURL(new Blob([blob]))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', 'teachers.xlsx')
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
 
-    Swal.close();
-    Swal.fire(t('common.success'), t('teacher.export_success'), 'success');
+    Swal.close()
+    Swal.fire(t('common.success'), t('teacher.export_success'), 'success')
   } catch (error) {
-    Swal.close();
-    let errorMessage = t('teacher.export_failed');
+    Swal.close()
+    let errorMessage = t('teacher.export_failed')
     if (error.response && error.response.data instanceof Blob) {
-      const reader = new FileReader();
+      const reader = new FileReader()
       reader.onload = function () {
         try {
-          const errorObj = JSON.parse(reader.result as string);
-          errorMessage = errorObj.message || errorMessage;
+          const errorObj = JSON.parse(reader.result as string)
+          errorMessage = errorObj.message || errorMessage
         } catch (e) {
-          errorMessage = t('teacher.export_failed') + ': ' + reader.result;
+          errorMessage = t('teacher.export_failed') + ': ' + reader.result
         }
-      };
-      reader.readAsText(error.response.data);
+      }
+      reader.readAsText(error.response.data)
     } else if (error.message) {
-      errorMessage = error.message;
+      errorMessage = error.message
     }
-    Swal.fire(t('common.error'), errorMessage, 'error'); // Use i18n for title
+    Swal.fire(t('common.error'), errorMessage, 'error') // Use i18n for title
   }
-};
+}
 
 // --- NEW: IMPORT LOGIC ---
 const openImportModal = () => {
-  showImportModal.value = true;
-  fileToImport.value = null;
-  importValidationErrors.value = [];
-  isImporting.value = false;
-  const fileInput = document.getElementById('importFileInput') as HTMLInputElement; // Corrected ID
-  if (fileInput) fileInput.value = '';
-};
+  showImportModal.value = true
+  fileToImport.value = null
+  importValidationErrors.value = []
+  isImporting.value = false
+  const fileInput = document.getElementById('importFileInput') as HTMLInputElement // Corrected ID
+  if (fileInput) fileInput.value = ''
+}
 
 const cancelImport = () => {
-  showImportModal.value = false;
-  fileToImport.value = null;
-  importValidationErrors.value = [];
-  const fileInput = document.getElementById('importFileInput') as HTMLInputElement; // Corrected ID
-  if (fileInput) fileInput.value = '';
-};
+  showImportModal.value = false
+  fileToImport.value = null
+  importValidationErrors.value = []
+  const fileInput = document.getElementById('importFileInput') as HTMLInputElement // Corrected ID
+  if (fileInput) fileInput.value = ''
+}
 
 const handleFileChange = (event: Event) => {
-  const target = event.target as HTMLInputElement;
+  const target = event.target as HTMLInputElement
   if (target.files && target.files.length > 0) {
-    fileToImport.value = target.files[0];
-    importValidationErrors.value = [];
+    fileToImport.value = target.files[0]
+    importValidationErrors.value = []
   } else {
-    fileToImport.value = null;
+    fileToImport.value = null
   }
-};
+}
 
 const handleDownloadTemplate = async () => {
   try {
     Swal.fire({
       title: t('common.downloading_template'),
       didOpen: () => {
-        Swal.showLoading();
+        Swal.showLoading()
       },
       allowOutsideClick: false,
       allowEscapeKey: false,
       showConfirmButton: false,
-    });
+    })
 
-    const blob = await downloadTeacherTemplate();
+    const blob = await downloadTeacherTemplate()
 
-    const url = window.URL.createObjectURL(new Blob([blob]));
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', 'teacher_import_template.xlsx');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
+    const url = window.URL.createObjectURL(new Blob([blob]))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', 'teacher_import_template.xlsx')
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
 
-    Swal.close();
-    Swal.fire(t('common.success'), t('teacher.template_download_success'), 'success');
+    Swal.close()
+    Swal.fire(t('common.success'), t('teacher.template_download_success'), 'success')
   } catch (error: any) {
-    Swal.close();
-    let errorMessage = t('teacher.template_download_failed');
+    Swal.close()
+    let errorMessage = t('teacher.template_download_failed')
     if (error.response && error.response.data instanceof Blob) {
-      const reader = new FileReader();
+      const reader = new FileReader()
       reader.onload = function () {
         try {
-          const errorObj = JSON.parse(reader.result as string);
-          errorMessage = errorObj.message || errorMessage;
+          const errorObj = JSON.parse(reader.result as string)
+          errorMessage = errorObj.message || errorMessage
         } catch (e) {
-          errorMessage = t('teacher.template_download_failed') + ': ' + reader.result;
+          errorMessage = t('teacher.template_download_failed') + ': ' + reader.result
         }
-      };
-      reader.readAsText(error.response.data);
+      }
+      reader.readAsText(error.response.data)
     } else if (error.message) {
-      errorMessage = error.message;
+      errorMessage = error.message
     }
-    Swal.fire(t('common.error'), errorMessage, 'error'); // Use i18n for title
+    Swal.fire(t('common.error'), errorMessage, 'error') // Use i18n for title
   }
-};
+}
 
 const handleSubmitImport = async () => {
   if (!fileToImport.value) {
-    Swal.fire(t('common.warning'), t('teacher.select_file_first'), 'warning');
-    return;
+    Swal.fire(t('common.warning'), t('teacher.select_file_first'), 'warning')
+    return
   }
 
-  isImporting.value = true;
-  importValidationErrors.value = [];
+  isImporting.value = true
+  importValidationErrors.value = []
 
   try {
     Swal.fire({
       title: t('common.importing_data'),
       didOpen: () => {
-        Swal.showLoading();
+        Swal.showLoading()
       },
       allowOutsideClick: false,
       allowEscapeKey: false,
       showConfirmButton: false,
-    });
+    })
 
-    const response = await importTeachers(fileToImport.value);
+    const response = await importTeachers(fileToImport.value)
 
-    Swal.close();
+    Swal.close()
     // Check if response has 'data_count' or 'imported_count'
-    const importedCount = response.data_count || response.imported_count || 0;
+    const importedCount = response.data_count || response.imported_count || 0
     Swal.fire(
       t('common.success'),
       t('teacher.import_success', { count: importedCount }), // Pass count for i18n
-      'success'
-    );
-    cancelImport();
-    loadTeachers();
+      'success',
+    )
+    cancelImport()
+    loadTeachers()
   } catch (error: any) {
-    Swal.close();
-    isImporting.value = false;
+    Swal.close()
+    isImporting.value = false
 
-    let errorMessage = t('teacher.import_failed_general'); // Default general error message
-    
+    let errorMessage = t('teacher.import_failed_general') // Default general error message
+
     // Handle specific validation errors from backend (e.g., from TeacherTemplateValidation or TeacherImport)
     if (error.response && error.response.data) {
-        if (error.response.data.message) {
-            errorMessage = error.response.data.message;
-        }
-        // If there are detailed errors (e.g., from TeacherImport's validation failures)
-        if (error.response.data.errors && Array.isArray(error.response.data.errors)) {
-            importValidationErrors.value = error.response.data.errors;
-            errorMessage = error.response.data.message || t('teacher.import_validation_errors');
+      if (error.response.data.message) {
+        errorMessage = error.response.data.message
+      }
+      // If there are detailed errors (e.g., from TeacherImport's validation failures)
+      if (error.response.data.errors && Array.isArray(error.response.data.errors)) {
+        importValidationErrors.value = error.response.data.errors
+        errorMessage = error.response.data.message || t('teacher.import_validation_errors')
 
-            let errorDetailsHtml = `<p>${errorMessage}</p><ul class="text-left mt-2 space-y-1 text-sm">`;
-            importValidationErrors.value.forEach((err: ImportValidationError) => {
-                errorDetailsHtml += `<li><strong>${t('common.row')} ${err.row}:</strong> ${err.errors.join(', ')}</li>`;
-            });
-            errorDetailsHtml += '</ul>';
+        let errorDetailsHtml = `<p>${errorMessage}</p><ul class="text-left mt-2 space-y-1 text-sm">`
+        importValidationErrors.value.forEach((err: ImportValidationError) => {
+          errorDetailsHtml += `<li><strong>${t('common.row')} ${err.row}:</strong> ${err.errors.join(', ')}</li>`
+        })
+        errorDetailsHtml += '</ul>'
 
-            Swal.fire({
-                title: t('common.error'), // General error title
-                html: errorDetailsHtml,
-                icon: 'error',
-                confirmButtonText: t('common.ok'),
-                width: '600px' // Adjust width for better readability if many errors
-            });
-            return; // Exit here if detailed errors are handled
-        }
+        Swal.fire({
+          title: t('common.error'), // General error title
+          html: errorDetailsHtml,
+          icon: 'error',
+          confirmButtonText: t('common.ok'),
+          width: '600px', // Adjust width for better readability if many errors
+        })
+        return // Exit here if detailed errors are handled
+      }
     } else if (error.message) {
-      errorMessage = error.message; // Generic JS error message
+      errorMessage = error.message // Generic JS error message
     }
 
-    Swal.fire(t('common.error'), errorMessage, 'error'); // Fallback for simple errors
+    Swal.fire(t('common.error'), errorMessage, 'error') // Fallback for simple errors
   } finally {
-    isImporting.value = false;
+    isImporting.value = false
   }
-};
+}
+
+const handleGenerateLink = async (teacherId: string) => {
+  try {
+    // Tampilkan loading SweetAlert2
+    Swal.fire({
+      title: t('common.loading'),
+      text: 'Membuat link penautan...',
+      didOpen: () => {
+        Swal.showLoading()
+      },
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      showConfirmButton: false,
+    })
+
+    const response = await generateTeacherLinkToken(teacherId)
+    generatedLink.value = response.token
+
+    Swal.close()
+    showLinkModal.value = true // Tampilkan modal dengan link
+    toast.success(t('teacher.link_generated_success')) // Tambahkan ini ke locale
+  } catch (error: any) {
+    Swal.close()
+    const errorMessage = error.response?.data?.message || t('common.api_failed')
+    Swal.fire(t('common.error'), errorMessage, 'error')
+  }
+}
 
 // --- Watcher untuk itemsPerPage ---
 watch(itemsPerPage, () => {
@@ -529,7 +566,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.Echo.leaveChannel('teachers')
-  console.log('Leaving teachers channel.'); // DEBUG LOG
+  console.log('Leaving teachers channel.') // DEBUG LOG
 })
 </script>
 
@@ -537,25 +574,36 @@ onBeforeUnmount(() => {
   <AdminLayout>
     <PageBreadcrumb :pageTitle="currentPageTitle" />
     <div
-      class="min-h-screen rounded-2xl border border-gray-200 bg-white px-5 py-7 dark:border-gray-800 dark:bg-white/[0.03] xl:px-10 xl:py-12">
+      class="min-h-screen rounded-2xl border border-gray-200 bg-white px-5 py-7 dark:border-gray-800 dark:bg-white/[0.03] xl:px-10 xl:py-12"
+    >
       <h1 class="text-3xl font-bold text-gray-800 mb-6">{{ t('teacher.management') }}</h1>
 
-      <div v-if="error"
+      <div
+        v-if="error"
         class="error-message bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
-        role="alert">
+        role="alert"
+      >
         <strong class="font-bold">{{ t('common.error') }}!</strong>
         <span class="block sm:inline ml-2">{{ error }}</span>
       </div>
 
-      <div class="flex flex-col sm:flex-row justify-between items-center mb-6 space-y-4 sm:space-y-0">
+      <div
+        class="flex flex-col sm:flex-row justify-between items-center mb-6 space-y-4 sm:space-y-0"
+      >
         <!-- Left Container: Per Page and Bulk Delete Button -->
         <div
-          class="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 w-full sm:w-auto justify-start">
+          class="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 w-full sm:w-auto justify-start"
+        >
           <!-- "Per Page" Dropdown -->
           <div class="flex items-center space-x-2">
-            <label for="perPageSelect" class="text-sm font-medium text-gray-700">{{ t('common.show') }}:</label>
-            <select id="perPageSelect" v-model.number="itemsPerPage"
-              class="block w-20 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+            <label for="perPageSelect" class="text-sm font-medium text-gray-700"
+              >{{ t('common.show') }}:</label
+            >
+            <select
+              id="perPageSelect"
+              v-model.number="itemsPerPage"
+              class="block w-20 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            >
               <option :value="5">5</option>
               <option :value="10">10</option>
               <option :value="20">20</option>
@@ -567,8 +615,13 @@ onBeforeUnmount(() => {
 
           <!-- Bulk Delete Button - only visible if items selected and has permission -->
           <div v-if="canBulkDelete" class="flex items-center space-x-2">
-            <ButtonComponent v-if="authStore.can('delete-teacher')" variant="danger" size="sm"
-              @click="openBulkDeleteConfirmModal" :loading="isBulkDeleting">
+            <ButtonComponent
+              v-if="authStore.can('delete-teacher')"
+              variant="danger"
+              size="sm"
+              @click="openBulkDeleteConfirmModal"
+              :loading="isBulkDeleting"
+            >
               {{ t('common.bulk_delete') }} ({{ selectedTeacherIds.length }})
             </ButtonComponent>
           </div>
@@ -577,11 +630,7 @@ onBeforeUnmount(() => {
         <!-- Right Container: Create Teacher Button -->
         <div class="flex items-center w-full sm:w-auto justify-end space-x-2">
           <!-- Import Data Button -->
-          <ButtonComponent 
-            variant="info"
-            size="md"
-            @click="openImportModal"
-            >
+          <ButtonComponent variant="info" size="md" @click="openImportModal">
             {{ t('teacher.import_data') }}
           </ButtonComponent>
 
@@ -591,26 +640,41 @@ onBeforeUnmount(() => {
           </ButtonComponent>
 
           <!-- Create Teacher Button -->
-          <ButtonComponent v-if="authStore.can('create-teacher')" variant="primary" size="md"
-            @click="handleCreateTeacher">
+          <ButtonComponent
+            v-if="authStore.can('create-teacher')"
+            variant="primary"
+            size="md"
+            @click="handleCreateTeacher"
+          >
             {{ t('common.create') }}
           </ButtonComponent>
         </div>
       </div>
 
-      <TableComponent :headers="tableHeaders" :items="teachers" :is-loading="isLoading" :items-per-page="itemsPerPage"
-        :empty-message="t('common.no_data')" v-model:modelValueFilters="columnFilters"
-        :current-sort-key="currentSortKey" :sort-direction="sortDirection" @sort="handleTableSort"
-        @apply-filters="handleApplyFilters" :selectedItems="selectedTeacherIds"
-        @update:selectedItems="handleSelectedItemsChange">
+      <TableComponent
+        :headers="tableHeaders"
+        :items="teachers"
+        :is-loading="isLoading"
+        :items-per-page="itemsPerPage"
+        :empty-message="t('common.no_data')"
+        v-model:modelValueFilters="columnFilters"
+        :current-sort-key="currentSortKey"
+        :sort-direction="sortDirection"
+        @sort="handleTableSort"
+        @apply-filters="handleApplyFilters"
+        :selectedItems="selectedTeacherIds"
+        @update:selectedItems="handleSelectedItemsChange"
+      >
         <template #actionsHeader>{{ t('common.actions') }}</template>
 
         <template #cell-gender="{ value }">
-          <span :class="{
-            'px-2 inline-flex text-xs leading-5 font-semibold rounded-full': true,
-            'bg-blue-100 text-blue-800': value === 'L', // Compare with 'L' as returned by backend
-            'bg-pink-100 text-pink-800': value === 'P', // Compare with 'P' as returned by backend
-          }">
+          <span
+            :class="{
+              'px-2 inline-flex text-xs leading-5 font-semibold rounded-full': true,
+              'bg-blue-100 text-blue-800': value === 'L', // Compare with 'L' as returned by backend
+              'bg-pink-100 text-pink-800': value === 'P', // Compare with 'P' as returned by backend
+            }"
+          >
             {{ value === 'L' ? t('common.male') : t('common.female') }}
           </span>
         </template>
@@ -618,10 +682,21 @@ onBeforeUnmount(() => {
         <template #actions="{ item }">
           <div class="flex justify-end space-x-2">
             <ButtonGroupComponent>
-              <ButtonComponent v-if="authStore.can('update-teacher')" variant="warning" @click="handleEdit(item.id)">{{
-                t('common.edit') }}</ButtonComponent>
-              <ButtonComponent v-if="authStore.can('delete-teacher')" variant="danger"
-                @click="openDeleteConfirmModal(item as Teacher)">{{ t('common.delete') }}</ButtonComponent>
+              <ButtonComponent
+                v-if="authStore.can('update-teacher')"
+                variant="warning"
+                @click="handleEdit(item.id)"
+                >{{ t('common.edit') }}</ButtonComponent
+              >
+              <ButtonComponent
+                v-if="authStore.can('delete-teacher')"
+                variant="danger"
+                @click="openDeleteConfirmModal(item as Teacher)"
+                >{{ t('common.delete') }}</ButtonComponent
+              >
+              <ButtonComponent variant="info" @click="handleGenerateLink(item.id)" v-if="item.user == null"
+                >Generate Link</ButtonComponent
+              >
             </ButtonGroupComponent>
           </div>
         </template>
@@ -630,10 +705,17 @@ onBeforeUnmount(() => {
       <div class="mt-8 justify-between items-center">
         <TablePagination :meta="paginationMeta" :links="paginationLinks" @go-to-page="goToPage" />
       </div>
-      
+
       <!-- Single Delete Confirmation Modal -->
-      <ModalComponent v-model="showDeleteConfirmModal" :title="t('common.confirm')" type="danger" max-width="sm"
-        :show-close-button="true" :backdrop-dismiss="true" @close="cancelDelete">
+      <ModalComponent
+        v-model="showDeleteConfirmModal"
+        :title="t('common.confirm')"
+        type="danger"
+        max-width="sm"
+        :show-close-button="true"
+        :backdrop-dismiss="true"
+        @close="cancelDelete"
+      >
         <p>
           <i18n-t keypath="teacher.delete_confirmation_single" tag="span">
             <template v-slot:name>
@@ -642,7 +724,12 @@ onBeforeUnmount(() => {
           </i18n-t>
         </p>
         <template #actions>
-          <ButtonComponent variant="secondary" size="sm" @click="cancelDelete" :disabled="isDeleting">
+          <ButtonComponent
+            variant="secondary"
+            size="sm"
+            @click="cancelDelete"
+            :disabled="isDeleting"
+          >
             {{ t('common.cancel') }}
           </ButtonComponent>
           <ButtonComponent variant="danger" size="sm" @click="confirmDelete" :loading="isDeleting">
@@ -652,9 +739,15 @@ onBeforeUnmount(() => {
       </ModalComponent>
 
       <!-- Bulk Delete Confirmation Modal -->
-      <ModalComponent v-model="showBulkDeleteConfirmModal" :title="t('common.confirm')" type="danger"
-        max-width="sm" :show-close-button="!isBulkDeleting" :backdrop-dismiss="!isBulkDeleting"
-        @close="cancelBulkDelete">
+      <ModalComponent
+        v-model="showBulkDeleteConfirmModal"
+        :title="t('common.confirm')"
+        type="danger"
+        max-width="sm"
+        :show-close-button="!isBulkDeleting"
+        :backdrop-dismiss="!isBulkDeleting"
+        @close="cancelBulkDelete"
+      >
         <p>
           <i18n-t keypath="teacher.delete_confirmation_bulk" tag="span">
             <template v-slot:count>
@@ -663,10 +756,20 @@ onBeforeUnmount(() => {
           </i18n-t>
         </p>
         <template #actions>
-          <ButtonComponent variant="secondary" size="sm" @click="cancelBulkDelete" :disabled="isBulkDeleting">
+          <ButtonComponent
+            variant="secondary"
+            size="sm"
+            @click="cancelBulkDelete"
+            :disabled="isBulkDeleting"
+          >
             {{ t('common.cancel') }}
           </ButtonComponent>
-          <ButtonComponent variant="danger" size="sm" @click="confirmBulkDelete" :loading="isBulkDeleting">
+          <ButtonComponent
+            variant="danger"
+            size="sm"
+            @click="confirmBulkDelete"
+            :loading="isBulkDeleting"
+          >
             {{ t('common.delete') }}
           </ButtonComponent>
         </template>
@@ -693,16 +796,12 @@ onBeforeUnmount(() => {
             id="importFileInput"
             @change="handleFileChange"
             accept=".xls,.xlsx"
-            class="block w-full text-sm text-gray-500
-                   file:mr-4 file:py-2 file:px-4
-                   file:rounded-full file:border-0
-                   file:text-sm file:font-semibold
-                   file:bg-indigo-50 file:text-indigo-700
-                   hover:file:bg-indigo-100"
+            class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
             :disabled="isImporting"
           />
           <p v-if="fileToImport" class="mt-2 text-sm text-gray-600">
-            {{ t('teacher.selected_file') }}: <span class="font-medium">{{ fileToImport.name }}</span>
+            {{ t('teacher.selected_file') }}:
+            <span class="font-medium">{{ fileToImport.name }}</span>
           </p>
         </div>
         <template #actions>
@@ -730,6 +829,25 @@ onBeforeUnmount(() => {
           >
             {{ t('common.submit_excel') }}
           </ButtonComponent>
+        </template>
+      </ModalComponent>
+
+      <!-- Modal untuk menampilkan link yang dihasilkan -->
+      <ModalComponent
+        v-model="showLinkModal"
+        :title="t('teacher.generated_link_title')"
+        type="info"
+        max-width="md"
+      >
+        <p class="mb-4">{{ t('teacher.generated_link_description') }}</p>
+        <div class="bg-gray-100 p-3 rounded-md break-all">
+          <strong>{{ generatedLink }}</strong>
+        </div>
+        <p class="mt-2 text-sm text-gray-600">{{ t('teacher.link_expires_info') }}</p>
+        <template #actions>
+          <ButtonComponent variant="primary" @click="showLinkModal = false">{{
+            t('common.close')
+          }}</ButtonComponent>
         </template>
       </ModalComponent>
     </div>

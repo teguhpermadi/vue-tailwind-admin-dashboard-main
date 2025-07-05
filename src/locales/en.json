@@ -99,7 +99,12 @@
 
     "created_success_toast": "Teacher {name} has been added!",
     "updated_success_toast": "Teacher {name} has been updated!",
-    "deleted_success_toast": "Teacher has been deleted!"
+    "deleted_success_toast": "Teacher has been deleted!",
+
+    "link_generated_success": "Linking token successfully generated!",
+    "generated_link_title": "Teacher Account Linking Token",
+    "generated_link_description": "Copy the link below and give it to the teacher concerned. The token will expire in 24 hours and can only be used once.",
+    "link_expires_info": "This token will expire in 24 hours and can only be used once."
   },
   "student": {
     "management": "Student Management",
@@ -166,5 +171,13 @@
   },
   "error": {
     "general_validation_error": "There are validation errors. Please check your input."
+  },
+  "link_account": {
+  "title": "Account Linking",
+  "no_token": "Linking token not found in URL.",
+  "linking_in_progress": "Linking your account...",
+  "link_success": "Your account has been successfully linked!",
+  "link_failed_general": "Failed to link your account. Please try again or contact an administrator.",
+  "go_to_dashboard": "Go to Dashboard"
   }
 }

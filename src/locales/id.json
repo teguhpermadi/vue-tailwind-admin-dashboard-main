@@ -99,7 +99,12 @@
 
     "created_success_toast": "Guru {name} telah ditambahkan!",
     "updated_success_toast": "Guru {name} telah diperbarui!",
-    "deleted_success_toast": "Guru telah dihapus!"
+    "deleted_success_toast": "Guru telah dihapus!",
+
+    "link_generated_success": "Token penautan berhasil dibuat!",
+    "generated_link_title": "Token Penautan Akun Guru",
+    "generated_link_description": "Salin link di bawah ini dan berikan kepada guru yang bersangkutan. Token akan kadaluarsa dalam 24 jam dan hanya bisa digunakan sekali.",
+    "link_expires_info": "Token ini akan kadaluarsa dalam 24 jam dan hanya bisa digunakan sekali."
   },
   "student": {
     "management": "Manajemen Siswa",
@@ -166,5 +171,13 @@
   },
   "error": {
     "general_validation_error": "Ada kesalahan validasi. Mohon periksa input Anda."
+  },
+  "link_account": {
+    "title": "Penautan Akun",
+    "no_token": "Token penautan tidak ditemukan di URL.",
+    "linking_in_progress": "Sedang menautkan akun Anda...",
+    "link_success": "Akun Anda berhasil ditautkan!",
+    "link_failed_general": "Gagal menautkan akun Anda. Mohon coba lagi atau hubungi administrator.",
+    "go_to_dashboard": "Pergi ke Dashboard"
   }
 }
