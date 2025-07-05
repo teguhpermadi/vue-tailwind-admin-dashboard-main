@@ -104,7 +104,9 @@
     "link_generated_success": "Token penautan berhasil dibuat!",
     "generated_link_title": "Token Penautan Akun Guru",
     "generated_link_description": "Salin link di bawah ini dan berikan kepada guru yang bersangkutan. Token akan kadaluarsa dalam 24 jam dan hanya bisa digunakan sekali.",
-    "link_expires_info": "Token ini akan kadaluarsa dalam 24 jam dan hanya bisa digunakan sekali."
+    "link_expires_info": "Token ini akan kadaluarsa dalam 24 jam dan hanya bisa digunakan sekali.",
+    "link_copied_success": "Link berhasil disalin ke clipboard!",
+    "link_copied_failed": "Gagal menyalin link ke clipboard."
   },
   "student": {
     "management": "Manajemen Siswa",

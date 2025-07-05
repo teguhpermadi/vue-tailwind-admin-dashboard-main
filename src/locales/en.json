@@ -104,7 +104,9 @@
     "link_generated_success": "Linking token successfully generated!",
     "generated_link_title": "Teacher Account Linking Token",
     "generated_link_description": "Copy the link below and give it to the teacher concerned. The token will expire in 24 hours and can only be used once.",
-    "link_expires_info": "This token will expire in 24 hours and can only be used once."
+    "link_expires_info": "This token will expire in 24 hours and can only be used once.",
+    "link_copied_success": "Link copied to clipboard!",
+    "link_copied_failed": "Failed to copy link to clipboard."
   },
   "student": {
     "management": "Student Management",
