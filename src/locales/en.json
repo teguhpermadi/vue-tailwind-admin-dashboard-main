@@ -101,12 +101,24 @@
     "updated_success_toast": "Teacher {name} has been updated!",
     "deleted_success_toast": "Teacher has been deleted!",
 
-    "link_generated_success": "Linking token successfully generated!",
-    "generated_link_title": "Teacher Account Linking Token",
-    "generated_link_description": "Copy the link below and give it to the teacher concerned. The token will expire in 24 hours and can only be used once.",
     "link_expires_info": "This token will expire in 24 hours and can only be used once.",
     "link_copied_success": "Link copied to clipboard!",
-    "link_copied_failed": "Failed to copy link to clipboard."
+    "link_copied_failed": "Failed to copy link to clipboard.",
+
+    "user_linked": "User Tertaut",
+    "linked": "Tertaut",
+    "not_linked": "Belum Tertaut",
+    "generate_link": "Buat Tautan",
+    "generating_link_message": "Membuat token tautan...",
+    "link_generated_success": "Token tautan berhasil dibuat!",
+    "generated_link_title": "Token Tautan Profil",
+    "generated_link_description": "Bagikan tautan ini kepada guru untuk menautkan profil mereka. Tautan akan kadaluarsa dalam:",
+    "copy_link_title": "Salin Tautan",
+    "link_expires_in": "Kadaluarsa dalam: {time}",
+    "link_expires_in_modal": "Kadaluarsa dalam: {time}",
+    "link_expired": "Kadaluarsa",
+    "already_linked": "Guru ini sudah tertaut dengan akun pengguna. Anda tidak dapat membuat token tautan baru.",
+    "error_missing_id": "ID Guru tidak ditemukan. Tidak dapat membuat tautan."
   },
   "student": {
     "management": "Student Management",
@@ -161,14 +173,7 @@
     "downloading_template": "Downloading template...",
     "template_download_success": "Template downloaded successfully.",
     "template_download_failed": "Failed to download template. Please try again later.",
-    "download_excel": "Download Excel",
-
-    "link_generated_success": "Linking token successfully generated!",
-    "generated_link_title": "Student Account Linking Token",
-    "generated_link_description": "Copy the link below and give it to the student concerned. The token will expire in 24 hours and can only be used once.",
-    "link_expires_info": "This token will expire in 24 hours and can only be used once.",
-    "link_copied_success": "Link copied to clipboard!",
-    "link_copied_failed": "Failed to copy link to clipboard."
+    "download_excel": "Download Excel"
   },
   "validation": {
     "required": "{field} is required.",

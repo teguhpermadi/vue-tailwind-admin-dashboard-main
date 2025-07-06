@@ -7,12 +7,13 @@ import {
   exportTeachers,
   importTeachers,
   downloadTeacherTemplate,
+  generateTeacherLinkToken,
   type Teacher,
   type PaginationMeta,
   type PaginationLinks,
   type ImportErrorResponse,
   type ImportValidationError,
-  generateTeacherLinkToken,
+  type ActiveLinkToken,
 } from '@/services/teacherService'
 import { isAuthenticated } from '@/services/authService'
 import TableComponent from '@/components/tables/TableComponent.vue'
@@ -73,10 +74,6 @@ const selectedTeacherIds = ref<string[]>([]) // Array ID guru yang dipilih dari 
 const showBulkDeleteConfirmModal = ref(false)
 const isBulkDeleting = ref(false) // Untuk spinner tombol bulk delete
 
-// state untuk generate link
-const generatedLink = ref<string | null>(null)
-const showLinkModal = ref(false) // Untuk menampilkan modal link
-
 // Computed untuk mengontrol apakah tombol bulk delete aktif
 const canBulkDelete = computed(() => selectedTeacherIds.value.length > 0)
 
@@ -98,10 +95,23 @@ const fileToImport = ref<File | null>(null)
 const isImporting = ref(false)
 const importValidationErrors = ref<ImportValidationError[]>([])
 
+// --- NEW STATE: Untuk Generate Link dan Countdown (Global untuk modal) ---
+const showLinkModal = ref(false);
+const generatedLink = ref<string | null>(null);
+const linkExpiresAt = ref<string | null>(null);
+const countdownTextModal = ref<string>(''); // Teks countdown khusus untuk modal
+const modalCountdownInterval = ref<number | null>(null); // Interval khusus untuk modal
+const isGeneratingLink = ref(false); // State loading untuk tombol generate link
+
+// --- NEW STATE: Untuk Countdown per Tombol (Map) ---
+// Map untuk menyimpan teks countdown dan interval ID untuk setiap guru
+const teacherCountdownStates = ref<Map<string, { countdownText: string; intervalId: number | null; }>>(new Map());
+
 // --- Table Headers Configuration ---
 const tableHeaders = [
   { key: 'name', label: t('teacher.name'), sortable: true, filterable: true },
   { key: 'gender', label: t('teacher.gender'), sortable: true, filterable: true },
+  { key: 'user_linked', label: t('teacher.user_linked'), sortable: false, filterable: false },
 ]
 
 // --- API Fetching Logic ---
@@ -130,6 +140,27 @@ const loadTeachers = async (page: number = 1) => {
       paginationMeta.value = response.meta
       paginationLinks.value = response.links
       currentPage.value = parseInt(response.meta.current_page || '1')
+
+      // Hentikan semua interval lama sebelum menginisialisasi ulang
+      teacherCountdownStates.value.forEach(state => {
+        if (state.intervalId) clearInterval(state.intervalId);
+      });
+      teacherCountdownStates.value.clear(); // Bersihkan map
+
+      // Inisialisasi status countdown untuk setiap guru
+      teachers.value.forEach(teacher => {
+        if (teacher.is_linked_to_user) {
+          // Jika sudah tertaut, tidak perlu countdown, tombol disembunyikan oleh v-if
+          teacherCountdownStates.value.set(teacher.id, { countdownText: '', intervalId: null });
+        } else if (teacher.active_link_token && new Date(teacher.active_link_token.expires_at).getTime() > Date.now()) {
+          // Jika ada token aktif dan belum kadaluarsa, mulai countdown untuk guru ini
+          startCountdownForTeacherButton(teacher.id, teacher.active_link_token.expires_at);
+        } else {
+          // Jika tidak ada token aktif atau sudah kadaluarsa
+          teacherCountdownStates.value.set(teacher.id, { countdownText: t('teacher.generate_link'), intervalId: null });
+        }
+      });
+
     } else {
       throw new Error(t('common.api_not_valid'))
     }
@@ -504,32 +535,75 @@ const handleSubmitImport = async () => {
   }
 }
 
-const handleGenerateLink = async (teacherId: string) => {
+// --- Handle Generate Link ---
+const handleGenerateLink = async (teacher: Teacher) => {
+  // 4. Jika data teacher sudah memiliki is_linked_to_user maka sembunyikan tombol generate link
+  // (Ini sudah ditangani oleh v-if di template, tapi baik untuk validasi tambahan)
+  if (teacher.is_linked_to_user) {
+    toast.info(t('teacher.already_linked')); // Pesan info baru
+    return;
+  }
+
+  // 2. Jika data teacher sudah memiliki active_link_token maka ketika tombol countdown di tekan maka menampilkan modal yang berisi link beserta waktu hitung mundurnya.
+  const activeToken = teacher.active_link_token;
+  if (activeToken && new Date(activeToken.expires_at).getTime() > Date.now()) {
+    // Jika ada token aktif, cukup tampilkan modal dengan data yang sudah ada
+    generatedLink.value = activeToken.linking_url || (import.meta.env.VITE_FRONTEND_URL + '/profile?token=' + activeToken.token); // Buat URL jika tidak ada
+    linkExpiresAt.value = activeToken.expires_at;
+    showLinkModal.value = true;
+    startModalCountdown(activeToken.expires_at); // Mulai countdown di modal
+    return;
+  }
+
+  // 3. Jika data teacher tidak memiliki active_link_token maka tampilkan tombol generate link saja
+  // (Ini adalah kasus default jika kondisi di atas tidak terpenuhi)
+  isGeneratingLink.value = true; // Set loading state for the button
   try {
-    // Tampilkan loading SweetAlert2
     Swal.fire({
       title: t('common.loading'),
-      text: 'Membuat link penautan...',
-      didOpen: () => {
-        Swal.showLoading()
-      },
+      text: t('teacher.generating_link_message'),
+      didOpen: () => { Swal.showLoading(); },
       allowOutsideClick: false,
       allowEscapeKey: false,
       showConfirmButton: false,
-    })
+    });
 
-    const response = await generateTeacherLinkToken(teacherId)
-    generatedLink.value = response.linking_url
-
-    Swal.close()
-    showLinkModal.value = true // Tampilkan modal dengan link
-    toast.success(t('teacher.link_generated_success')) // Tambahkan ini ke locale
+    // Panggil API generateLinkToken dengan tipe 'teacher'
+    const response = await generateTeacherLinkToken('teacher', teacher.id);
+    generatedLink.value = response.linking_url;
+    linkExpiresAt.value = response.expires_at;
+    
+    Swal.close();
+    showLinkModal.value = true;
+    toast.success(t('teacher.link_generated_success'));
+    
+    // Perbarui objek guru di array teachers secara langsung
+    const index = teachers.value.findIndex(t => t.id === teacher.id);
+    if (index !== -1) {
+      teachers.value[index].active_link_token = {
+        token: response.token,
+        expires_at: response.expires_at,
+        // linking_url: response.linking_url // Simpan juga linking_url jika ada di response
+      };
+      // Langsung mulai countdown untuk tombol guru ini
+      startCountdownForTeacherButton(teacher.id, response.expires_at);
+    }
+    startModalCountdown(response.expires_at); // Mulai hitung mundur di modal
   } catch (error: any) {
-    Swal.close()
-    const errorMessage = error.response?.data?.message || t('common.api_failed')
-    Swal.fire(t('common.error'), errorMessage, 'error')
+    Swal.close();
+    const errorMessage = error.response?.data?.message || t('common.api_failed');
+    Swal.fire(t('common.error'), errorMessage, 'error');
+    // Reset token state if generation failed
+    generatedLink.value = null;
+    linkExpiresAt.value = null;
+    countdownTextModal.value = '';
+    if (modalCountdownInterval.value) clearInterval(modalCountdownInterval.value);
+    // Reset countdown state for this specific teacher button
+    teacherCountdownStates.value.set(teacher.id, { countdownText: t('teacher.generate_link'), intervalId: null });
+  } finally {
+    isGeneratingLink.value = false;
   }
-}
+};
 
 // NEW: Copy to clipboard functionality
 const copyToClipboard = () => {
@@ -554,42 +628,180 @@ const copyToClipboard = () => {
   }
 }
 
+// Countdown Logic per Tombol
+const startCountdownForTeacherButton = (teacherId: string, expiresAt: string) => {
+  const expiryTime = new Date(expiresAt).getTime();
+  let state = teacherCountdownStates.value.get(teacherId);
+
+  if (!state) {
+    state = { countdownText: '', intervalId: null };
+    teacherCountdownStates.value.set(teacherId, state);
+  }
+
+  // Hentikan interval lama jika ada
+  if (state.intervalId) {
+    clearInterval(state.intervalId);
+  }
+
+  state.intervalId = window.setInterval(() => {
+    const now = Date.now();
+    const remaining = expiryTime - now;
+
+    if (remaining <= 0) {
+      clearInterval(state!.intervalId!);
+      state!.countdownText = t('teacher.link_expired');
+      state!.intervalId = null;
+      // Opsional: Perbarui objek guru di array teachers agar active_link_token menjadi null
+      // Ini akan membuat tombol kembali ke "Generate Link" setelah kadaluarsa
+      const index = teachers.value.findIndex(t => t.id === teacherId);
+      if (index !== -1) {
+        teachers.value[index].active_link_token = null;
+      }
+      return;
+    }
+
+    const hours = Math.floor(remaining / (1000 * 60 * 60));
+    const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
+
+    let timeString = '';
+    if (hours > 0) timeString += `${hours}j `;
+    if (minutes > 0) timeString += `${minutes}m `;
+    timeString += `${seconds}d`;
+
+    state!.countdownText = t('teacher.link_expires_in', { time: timeString.trim() });
+  }, 1000);
+};
+
+// Countdown Logic untuk Modal (tetap terpisah)
+const startModalCountdown = (expiresAt: string) => {
+  if (modalCountdownInterval.value) {
+    clearInterval(modalCountdownInterval.value);
+  }
+
+  const expiryTime = new Date(expiresAt).getTime();
+
+  modalCountdownInterval.value = window.setInterval(() => {
+    const now = Date.now();
+    const remaining = expiryTime - now;
+
+    if (remaining <= 0) {
+      clearInterval(modalCountdownInterval.value!);
+      countdownTextModal.value = t('teacher.link_expired');
+      generatedLink.value = null; // Hapus link saat kadaluarsa
+      linkExpiresAt.value = null;
+      showLinkModal.value = false; // Tutup modal jika kadaluarsa
+      return;
+    }
+
+    const hours = Math.floor(remaining / (1000 * 60 * 60));
+    const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
+
+    let timeString = '';
+    if (hours > 0) timeString += `${hours}j `;
+    if (minutes > 0) timeString += `${minutes}m `;
+    timeString += `${seconds}d`;
+
+    countdownTextModal.value = timeString.trim();
+  }, 1000);
+};
+
+
+// Computed property untuk teks tombol Generate Link
+const getGenerateButtonText = (teacher: Teacher) => {
+  const state = teacherCountdownStates.value.get(teacher.id);
+  // Jika sudah tertaut, tidak ada teks (karena tombol disembunyikan)
+  if (teacher.is_linked_to_user) {
+    return '';
+  }
+  // Jika ada state countdown untuk guru ini, gunakan itu
+  if (state && state.countdownText) {
+    return state.countdownText;
+  }
+  // Default jika tidak ada token aktif atau countdown belum dimulai
+  return t('teacher.generate_link');
+};
+
+// Computed property untuk status loading tombol Generate Link
+const isGenerateButtonLoading = computed(() => isGeneratingLink.value);
+
 // --- Watcher untuk itemsPerPage ---
 watch(itemsPerPage, () => {
   currentPage.value = 1
   selectedTeacherIds.value = []
+  // Clear all existing countdown intervals for buttons
+  teacherCountdownStates.value.forEach(state => {
+    if (state.intervalId) clearInterval(state.intervalId);
+  });
+  teacherCountdownStates.value.clear(); // Clear the map
+
+  // Clear global modal countdown interval
+  if (modalCountdownInterval.value) clearInterval(modalCountdownInterval.value);
+  generatedLink.value = null;
+  linkExpiresAt.value = null;
+  countdownTextModal.value = '';
+
   loadTeachers(currentPage.value)
 })
 
 // --- Lifecycle Hook ---
 onMounted(() => {
-  loadTeachers()
+  console.log('TeacherIndex.vue: Component mounted. Attempting to load teachers and listen to Echo channel.');
+  loadTeachers(); // Initial load of teachers
 
-  window.Echo.channel('teachers')
-    .listen('.teacher.created', (e) => {
-      // console.log('Event received: teacher.created', e); // DEBUG LOG
-      loadTeachers(currentPage.value)
-      // toast.success(t('teacher.created_success_toast', { name: e.teacher.name })) // Menggunakan kunci i18n baru
-    })
-    .listen('.teacher.updated', (e) => {
-      // console.log('Event received: teacher.updated', e); // DEBUG LOG
-      const index = teachers.value.findIndex((t) => t.id === e.teacher.id)
-      if (index !== -1) {
-        teachers.value[index] = e.teacher
-      }
-      // toast.success(t('teacher.updated_success_toast', { name: e.teacher.name })) // Menggunakan kunci i18n baru
-    })
-    .listen('.teacher.deleted', (e) => {
-      // console.log('Event received: teacher.deleted', e); // DEBUG LOG
-      teachers.value = teachers.value.filter((t) => t.id !== e.teacher_id)
-      // toast.success(t('teacher.deleted_success_toast')) // Menggunakan kunci i18n baru
-      loadTeachers(currentPage.value)
-    })
+  if (window.Echo) {
+    console.log('TeacherIndex.vue: Echo instance found. Subscribing to "teachers" and "profiles" channels.');
+    
+    // Listener untuk event Teacher (created, updated, deleted)
+    window.Echo.channel('teachers')
+      .listen('.teacher.created', (e) => {
+        console.log('TeacherIndex.vue: Echo Event received: teacher.created', e);
+        loadTeachers(currentPage.value);
+        toast.success(t('teacher.created_success_toast', { name: e.teacher.name }));
+      })
+      .listen('.teacher.updated', (e) => {
+        console.log('TeacherIndex.vue: Echo Event received: teacher.updated', e);
+        // Ketika teacher diupdate, kita perlu memuat ulang data untuk memastikan
+        // status user_linked dan tombol generate link diperbarui.
+        loadTeachers(currentPage.value); // Reload penuh untuk update status tautan
+        toast.success(t('teacher.updated_success_toast', { name: e.teacher.name }));
+      })
+      .listen('.teacher.deleted', (e) => {
+        console.log('TeacherIndex.vue: Echo Event received: teacher.deleted', e);
+        teachers.value = teachers.value.filter((t) => t.id !== e.teacher_id);
+        loadTeachers(currentPage.value);
+        toast.success(t('teacher.deleted_success_toast'));
+      });
+
+    // Listener untuk event ProfileLinked
+    window.Echo.channel('profiles')
+      .listen('.profile.linked', (e) => {
+        console.log('TeacherIndex.vue: Echo Event received: profile.linked', e);
+        if (e.userable_type === 'App\\Models\\Teacher') {
+          console.log('TeacherIndex.vue: Linked profile is a Teacher. Reloading teachers table.');
+          loadTeachers(currentPage.value); // Muat ulang data guru
+          toast.success(t('teacher.profile_linked_success_toast'));
+        }
+      });
+  } else {
+    console.warn('TeacherIndex.vue: window.Echo is not defined. Real-time updates will not work.');
+  }
 })
 
 onBeforeUnmount(() => {
-  window.Echo.leaveChannel('teachers')
-  console.log('Leaving teachers channel.') // DEBUG LOG
+  // Clear all countdown intervals for buttons
+  teacherCountdownStates.value.forEach(state => {
+    if (state.intervalId) clearInterval(state.intervalId);
+  });
+  // Clear global modal countdown interval
+  if (modalCountdownInterval.value) clearInterval(modalCountdownInterval.value);
+
+  if (window.Echo) {
+    window.Echo.leaveChannel('teachers');
+    window.Echo.leaveChannel('profiles');
+    console.log('TeacherIndex.vue: Leaving teachers and profiles channels.');
+  }
 })
 </script>
 
@@ -702,6 +914,15 @@ onBeforeUnmount(() => {
           </span>
         </template>
 
+        <template #cell-user_linked="{ item }">
+          <span v-if="item.is_linked_to_user" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+            {{ t('teacher.linked') }}
+          </span>
+          <span v-else class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+            {{ t('teacher.not_linked') }}
+          </span>
+        </template>
+
         <template #actions="{ item }">
           <div class="flex justify-end space-x-2">
             <ButtonGroupComponent>
@@ -717,12 +938,13 @@ onBeforeUnmount(() => {
                 @click="openDeleteConfirmModal(item as Teacher)"
                 >{{ t('common.delete') }}</ButtonComponent
               >
-              <ButtonComponent
-                variant="info"
-                @click="handleGenerateLink(item.id)"
-                v-if="item.user == null"
+              <ButtonComponent 
+                v-if="!item.is_linked_to_user" 
+                variant="info" 
+                @click="handleGenerateLink(item)"
+                :loading="isGeneratingLink && teacherCountdownStates.get(item.id)?.intervalId !== null"
               >
-                Generate Link
+                {{ getGenerateButtonText(item) }}
               </ButtonComponent>
             </ButtonGroupComponent>
           </div>

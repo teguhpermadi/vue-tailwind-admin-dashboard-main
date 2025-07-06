@@ -32,6 +32,12 @@ export interface TeacherSubject {
   updated_at: string;
 }
 
+// NEW: Interface untuk active_link_token
+export interface ActiveLinkToken {
+  token: string;
+  expires_at: string;
+}
+
 export interface Teacher {
   id: string;
   name: string;
@@ -40,6 +46,8 @@ export interface Teacher {
   subject_count: string;
   subjects: TeacherSubject[];
   user?: User | null; // NEW: Tambahkan properti user, bisa null jika belum tertaut
+  is_linked_to_user: boolean;
+  active_link_token?: ActiveLinkToken | null; // NEW: Tambahkan properti ini
   created_at: string;
   updated_at: string;
   deleted_at?: string;
@@ -331,12 +339,13 @@ export const downloadTeacherTemplate = async (): Promise<Blob> => {
   }
 };
 
-export const generateTeacherLinkToken = async (teacherId: string): Promise<{ message: string; token: string; expires_at: string; linking_url: string }> => {
+// Existing generateTeacherLinkToken function, it now calls the polymorphic endpoint
+export const generateTeacherLinkToken = async (type: 'teacher' | 'student', id: string): Promise<{ message: string; token: string; expires_at: string; linking_url: string }> => {
   try {
-    const response = await api.post(`/link-tokens/generate/teacher/${teacherId}`);
+    const response = await api.post(`/link-tokens/generate/${type}/${id}`);
     return response.data;
   } catch (error: any) {
-    console.error('Error generating teacher link token:', error.response?.data || error.message);
+    console.error('Error generating link token:', error.response?.data || error.message);
     throw error;
   }
 };

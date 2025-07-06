@@ -101,12 +101,23 @@
     "updated_success_toast": "Guru {name} telah diperbarui!",
     "deleted_success_toast": "Guru telah dihapus!",
 
-    "link_generated_success": "Token penautan berhasil dibuat!",
-    "generated_link_title": "Token Penautan Akun Guru",
-    "generated_link_description": "Salin link di bawah ini dan berikan kepada guru yang bersangkutan. Token akan kadaluarsa dalam 24 jam dan hanya bisa digunakan sekali.",
+    
     "link_expires_info": "Token ini akan kadaluarsa dalam 24 jam dan hanya bisa digunakan sekali.",
     "link_copied_success": "Link berhasil disalin ke clipboard!",
-    "link_copied_failed": "Gagal menyalin link ke clipboard."
+    "link_copied_failed": "Gagal menyalin link ke clipboard.",
+    "user_linked": "User Tertaut",
+    "linked": "Tertaut",
+    "not_linked": "Belum Tertaut",
+    "generate_link": "Buat Tautan",
+    "generating_link_message": "Membuat token tautan...",
+    "link_generated_success": "Token tautan berhasil dibuat!",
+    "generated_link_title": "Token Tautan Profil",
+    "generated_link_description": "Bagikan tautan ini kepada guru untuk menautkan profil mereka. Tautan akan kadaluarsa dalam:",
+    "copy_link_title": "Salin Tautan",
+    "link_expires_in": "Kadaluarsa dalam: {time}",
+    "link_expires_in_modal": "Kadaluarsa dalam: {time}",
+    "link_expired": "Kadaluarsa",
+    "already_linked": "Guru ini sudah tertaut dengan akun pengguna. Anda tidak dapat membuat token tautan baru."
   },
   "student": {
     "management": "Manajemen Siswa",
@@ -161,14 +172,7 @@
     "downloading_template": "Mengunduh template...",
     "template_download_success": "Template berhasil diunduh.",
     "template_download_failed": "Gagal mengunduh template. Silakan coba lagi nanti.",
-    "download_excel": "Unduh Excel",
-
-    "link_generated_success": "Token penautan berhasil dibuat!",
-    "generated_link_title": "Token Penautan Akun Siswa",
-    "generated_link_description": "Salin link di bawah ini dan berikan kepada siswa yang bersangkutan. Token akan kadaluarsa dalam 24 jam dan hanya bisa digunakan sekali.",
-    "link_expires_info": "Token ini akan kadaluarsa dalam 24 jam dan hanya bisa digunakan sekali.",
-    "link_copied_success": "Link berhasil disalin ke clipboard!",
-    "link_copied_failed": "Gagal menyalin link ke clipboard."
+    "download_excel": "Unduh Excel"
   },
   "validation": {
     "required": "{field} wajib diisi.",
