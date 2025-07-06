@@ -519,7 +519,7 @@ const handleGenerateLink = async (teacherId: string) => {
     })
 
     const response = await generateTeacherLinkToken(teacherId)
-    generatedLink.value = response.token
+    generatedLink.value = response.linking_url
 
     Swal.close()
     showLinkModal.value = true // Tampilkan modal dengan link
@@ -535,24 +535,24 @@ const handleGenerateLink = async (teacherId: string) => {
 const copyToClipboard = () => {
   if (generatedLink.value) {
     // Membuat elemen textarea sementara untuk menyalin teks
-    const textarea = document.createElement('textarea');
-    textarea.value = generatedLink.value;
-    document.body.appendChild(textarea);
-    textarea.select();
+    const textarea = document.createElement('textarea')
+    textarea.value = generatedLink.value
+    document.body.appendChild(textarea)
+    textarea.select()
     try {
-      const successful = document.execCommand('copy');
+      const successful = document.execCommand('copy')
       if (successful) {
-        toast.success(t('teacher.link_copied_success')); // New locale key
+        toast.success(t('teacher.link_copied_success')) // New locale key
       } else {
-        toast.error(t('teacher.link_copied_failed')); // New locale key
+        toast.error(t('teacher.link_copied_failed')) // New locale key
       }
     } catch (err) {
-      console.error('Failed to copy text: ', err);
-      toast.error(t('teacher.link_copied_failed'));
+      console.error('Failed to copy text: ', err)
+      toast.error(t('teacher.link_copied_failed'))
     }
-    document.body.removeChild(textarea);
+    document.body.removeChild(textarea)
   }
-};
+}
 
 // --- Watcher untuk itemsPerPage ---
 watch(itemsPerPage, () => {
@@ -717,9 +717,13 @@ onBeforeUnmount(() => {
                 @click="openDeleteConfirmModal(item as Teacher)"
                 >{{ t('common.delete') }}</ButtonComponent
               >
-              <ButtonComponent variant="info" @click="handleGenerateLink(item.id)" v-if="item.user == null"
-                >Generate Link</ButtonComponent
+              <ButtonComponent
+                variant="info"
+                @click="handleGenerateLink(item.id)"
+                v-if="item.user == null"
               >
+                Generate Link
+              </ButtonComponent>
             </ButtonGroupComponent>
           </div>
         </template>
@@ -856,17 +860,33 @@ onBeforeUnmount(() => {
       </ModalComponent>
 
       <!-- Modal untuk menampilkan link yang dihasilkan -->
-      <ModalComponent v-model="showLinkModal" :title="t('teacher.generated_link_title')" type="info" max-width="md">
+      <ModalComponent
+        v-model="showLinkModal"
+        :title="t('teacher.generated_link_title')"
+        type="info"
+        max-width="md"
+      >
         <p class="mb-4">{{ t('teacher.generated_link_description') }}</p>
         <div class="flex items-center space-x-2 bg-gray-100 p-3 rounded-md break-all text-gray-800">
           <strong class="flex-grow">{{ generatedLink }}</strong>
-          <button 
-            @click="copyToClipboard" 
+          <button
+            @click="copyToClipboard"
             class="p-2 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             title="Salin Link"
           >
-            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+            <svg
+              class="w-5 h-5 text-gray-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+              ></path>
             </svg>
           </button>
         </div>
@@ -874,7 +894,9 @@ onBeforeUnmount(() => {
           {{ t('teacher.link_expires_info', { time: new Date(linkExpiresAt).toLocaleString() }) }}
         </p>
         <template #actions>
-          <ButtonComponent variant="primary" @click="showLinkModal = false">{{ t('common.close') }}</ButtonComponent>
+          <ButtonComponent variant="primary" @click="showLinkModal = false">{{
+            t('common.close')
+          }}</ButtonComponent>
         </template>
       </ModalComponent>
     </div>

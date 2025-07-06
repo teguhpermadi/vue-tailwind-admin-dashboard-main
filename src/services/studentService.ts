@@ -38,6 +38,7 @@ export interface Student {
   nisn: number; // Nomor Induk Siswa Nasional
   nis: number;  // Nomor Induk Siswa
   grades: StudentGrade[]; // Relasi dengan StudentGrade (many-to-many through pivot)
+  user: User;
   created_at: string;
   updated_at: string;
   deleted_at?: string; // Untuk soft delete
@@ -85,6 +86,16 @@ export interface ImportErrorResponse {
     errors: ImportValidationError[];
 }
 
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  userable_id: string | null;
+  userable_type: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 // Payload untuk membuat siswa baru
 export type CreateStudentPayload = Omit<Student, 'id' | 'grades' | 'created_at' | 'updated_at' | 'deleted_at'>;
 
@@ -121,6 +132,9 @@ export const fetchStudents = async (
     if (sort) {
       params.sort = sort;
     }
+
+    // NEW: Tambahkan parameter 'include' untuk memuat relasi user
+    params.include = 'user'; // Ini akan memuat relasi 'user'
 
     const response = await api.get<StudentsResponse>('/students', { params });
     return response.data;
@@ -315,5 +329,15 @@ export const downloadStudentTemplate = async (): Promise<Blob> => {
   } catch (error: any) {
     console.error('Error downloading student template:', error.response?.data || error.message);
     throw error; // Biarkan komponen pemanggil menangani error
+  }
+};
+
+export const generateStudentLinkToken = async (studentId: string): Promise<{ message: string; token: string; expires_at: string; linking_url: string }> => {
+  try {
+    const response = await api.post(`/link-tokens/generate/student/${studentId}`);
+    return response.data;
+  } catch (error: any) {
+    console.error('Error generating teacher link token:', error.response?.data || error.message);
+    throw error;
   }
 };

@@ -333,7 +333,7 @@ export const downloadTeacherTemplate = async (): Promise<Blob> => {
 
 export const generateTeacherLinkToken = async (teacherId: string): Promise<{ message: string; token: string; expires_at: string; linking_url: string }> => {
   try {
-    const response = await api.post(`/teachers/${teacherId}/generate-link-token`);
+    const response = await api.post(`/link-tokens/generate/teacher/${teacherId}`);
     return response.data;
   } catch (error: any) {
     console.error('Error generating teacher link token:', error.response?.data || error.message);

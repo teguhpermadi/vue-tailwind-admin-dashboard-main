@@ -12,6 +12,7 @@ import {
   type PaginationLinks,
   type ImportErrorResponse,
   type ImportValidationError,
+  generateStudentLinkToken
 } from '@/services/studentService'
 import { isAuthenticated } from '@/services/authService'
 import TableComponent from '@/components/tables/TableComponent.vue'
@@ -71,6 +72,10 @@ const isDeleting = ref(false)
 const selectedStudentIds = ref<string[]>([])
 const showBulkDeleteConfirmModal = ref(false)
 const isBulkDeleting = ref(false)
+
+// state untuk generate link
+const generatedLink = ref<string | null>(null)
+const showLinkModal = ref(false) // Untuk menampilkan modal link
 
 // Computed untuk mengontrol apakah tombol bulk delete aktif
 const canBulkDelete = computed(() => selectedStudentIds.value.length > 0)
@@ -496,6 +501,56 @@ const handleSubmitImport = async () => {
   }
 };
 
+const handleGenerateLink = async (studentId: string) => {
+  try {
+    // Tampilkan loading SweetAlert2
+    Swal.fire({
+      title: t('common.loading'),
+      text: 'Membuat link penautan...',
+      didOpen: () => {
+        Swal.showLoading()
+      },
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      showConfirmButton: false,
+    })
+
+    const response = await generateStudentLinkToken(studentId)
+    generatedLink.value = response.linking_url
+
+    Swal.close()
+    showLinkModal.value = true // Tampilkan modal dengan link
+    toast.success(t('student.link_generated_success')) // Tambahkan ini ke locale
+  } catch (error: any) {
+    Swal.close()
+    const errorMessage = error.response?.data?.message || t('common.api_failed')
+    Swal.fire(t('common.error'), errorMessage, 'error')
+  }
+}
+
+// NEW: Copy to clipboard functionality
+const copyToClipboard = () => {
+  if (generatedLink.value) {
+    // Membuat elemen textarea sementara untuk menyalin teks
+    const textarea = document.createElement('textarea');
+    textarea.value = generatedLink.value;
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+      const successful = document.execCommand('copy');
+      if (successful) {
+        toast.success(t('teacher.link_copied_success')); // New locale key
+      } else {
+        toast.error(t('teacher.link_copied_failed')); // New locale key
+      }
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+      toast.error(t('teacher.link_copied_failed'));
+    }
+    document.body.removeChild(textarea);
+  }
+};
+
 // --- Watcher untuk itemsPerPage ---
 watch(itemsPerPage, () => {
   currentPage.value = 1
@@ -618,6 +673,13 @@ onBeforeUnmount(() => {
               <ButtonComponent v-if="authStore.can('delete-student')" variant="danger"
                 @click="openDeleteConfirmModal(item as Student)">{{ t('common.delete') }}
               </ButtonComponent>
+              <ButtonComponent
+                variant="info"
+                @click="handleGenerateLink(item.id)"
+                v-if="item.user == null"
+              >
+                Generate Link
+              </ButtonComponent>
             </ButtonGroupComponent>
           </div>
         </template>
@@ -696,6 +758,47 @@ onBeforeUnmount(() => {
           <ButtonComponent variant="success" size="sm" @click="handleSubmitImport" :loading="isImporting">
             {{ t('common.submit_excel') }}
           </ButtonComponent>
+        </template>
+      </ModalComponent>
+
+      <!-- Modal untuk menampilkan link yang dihasilkan -->
+      <ModalComponent
+        v-model="showLinkModal"
+        :title="t('teacher.generated_link_title')"
+        type="info"
+        max-width="md"
+      >
+        <p class="mb-4">{{ t('teacher.generated_link_description') }}</p>
+        <div class="flex items-center space-x-2 bg-gray-100 p-3 rounded-md break-all text-gray-800">
+          <strong class="flex-grow">{{ generatedLink }}</strong>
+          <button
+            @click="copyToClipboard"
+            class="p-2 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            title="Salin Link"
+          >
+            <svg
+              class="w-5 h-5 text-gray-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+              ></path>
+            </svg>
+          </button>
+        </div>
+        <p v-if="linkExpiresAt" class="mt-2 text-sm text-gray-600">
+          {{ t('teacher.link_expires_info', { time: new Date(linkExpiresAt).toLocaleString() }) }}
+        </p>
+        <template #actions>
+          <ButtonComponent variant="primary" @click="showLinkModal = false">{{
+            t('common.close')
+          }}</ButtonComponent>
         </template>
       </ModalComponent>
     </div>

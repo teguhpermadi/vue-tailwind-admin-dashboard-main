@@ -161,7 +161,14 @@
     "downloading_template": "Downloading template...",
     "template_download_success": "Template downloaded successfully.",
     "template_download_failed": "Failed to download template. Please try again later.",
-    "download_excel": "Download Excel"
+    "download_excel": "Download Excel",
+
+    "link_generated_success": "Linking token successfully generated!",
+    "generated_link_title": "Student Account Linking Token",
+    "generated_link_description": "Copy the link below and give it to the student concerned. The token will expire in 24 hours and can only be used once.",
+    "link_expires_info": "This token will expire in 24 hours and can only be used once.",
+    "link_copied_success": "Link copied to clipboard!",
+    "link_copied_failed": "Failed to copy link to clipboard."
   },
   "validation": {
     "required": "{field} is required.",
@@ -175,11 +182,31 @@
     "general_validation_error": "There are validation errors. Please check your input."
   },
   "link_account": {
-  "title": "Account Linking",
-  "no_token": "Linking token not found in URL.",
-  "linking_in_progress": "Linking your account...",
-  "link_success": "Your account has been successfully linked!",
-  "link_failed_general": "Failed to link your account. Please try again or contact an administrator.",
-  "go_to_dashboard": "Go to Dashboard"
+    "title": "Account Linking",
+    "no_token": "Linking token not found in URL.",
+    "linking_in_progress": "Linking your account...",
+    "link_success": "Your account has been successfully linked!",
+    "link_failed_general": "Failed to link your account. Please try again or contact an administrator.",
+    "go_to_dashboard": "Go to Dashboard"
+  },
+  "profile": {
+    "title": "User Profile",
+    "user_account_info": "User Account Information",
+    "linked_profile_info": "Linked Profile Information",
+    "profile_type": "Profile Type",
+    "teacher_profile": "Teacher Profile",
+    "student_profile": "Student Profile",
+    "not_linked_message": "This account is not yet linked to any teacher or student profile.",
+    "link_account_form_title": "Link Your Account to a Profile",
+    "link_account_form_description": "Enter the linking token provided by the administrator to connect your user account with your teacher or student profile.",
+    "linking_token_label": "Linking Token",
+    "linking_token_placeholder": "Enter your linking token here...",
+    "link_button": "Link Account",
+    "linking_account": "Linking Account",
+    "linking_in_progress": "Linking in progress...",
+    "link_success": "Account linked successfully!",
+    "link_failed_general": "Failed to link account. Please try again or contact administrator.",
+    "token_required": "Linking token is required.",
+    "error_load_user": "Failed to load user profile. Please try again later."
   }
 }

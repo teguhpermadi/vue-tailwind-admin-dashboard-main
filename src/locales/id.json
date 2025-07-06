@@ -161,7 +161,14 @@
     "downloading_template": "Mengunduh template...",
     "template_download_success": "Template berhasil diunduh.",
     "template_download_failed": "Gagal mengunduh template. Silakan coba lagi nanti.",
-    "download_excel": "Unduh Excel"
+    "download_excel": "Unduh Excel",
+
+    "link_generated_success": "Token penautan berhasil dibuat!",
+    "generated_link_title": "Token Penautan Akun Siswa",
+    "generated_link_description": "Salin link di bawah ini dan berikan kepada siswa yang bersangkutan. Token akan kadaluarsa dalam 24 jam dan hanya bisa digunakan sekali.",
+    "link_expires_info": "Token ini akan kadaluarsa dalam 24 jam dan hanya bisa digunakan sekali.",
+    "link_copied_success": "Link berhasil disalin ke clipboard!",
+    "link_copied_failed": "Gagal menyalin link ke clipboard."
   },
   "validation": {
     "required": "{field} wajib diisi.",
@@ -181,5 +188,25 @@
     "link_success": "Akun Anda berhasil ditautkan!",
     "link_failed_general": "Gagal menautkan akun Anda. Mohon coba lagi atau hubungi administrator.",
     "go_to_dashboard": "Pergi ke Dashboard"
+  },
+  "profile": {
+    "title": "Profil Pengguna",
+    "user_account_info": "Informasi Akun Pengguna",
+    "linked_profile_info": "Informasi Profil Tertaut",
+    "profile_type": "Tipe Profil",
+    "teacher_profile": "Profil Guru",
+    "student_profile": "Profil Siswa",
+    "not_linked_message": "Akun ini belum tertaut dengan profil guru atau siswa manapun.",
+    "link_account_form_title": "Tautkan Akun Anda ke Profil",
+    "link_account_form_description": "Masukkan token penautan yang diberikan oleh administrator untuk menghubungkan akun pengguna Anda dengan profil guru atau siswa Anda.",
+    "linking_token_label": "Token Penautan",
+    "linking_token_placeholder": "Masukkan token penautan Anda di sini...",
+    "link_button": "Tautkan Akun",
+    "linking_account": "Menautkan Akun",
+    "linking_in_progress": "Proses penautan...",
+    "link_success": "Akun berhasil ditautkan!",
+    "link_failed_general": "Gagal menautkan akun. Silakan coba lagi atau hubungi administrator.",
+    "token_required": "Token penautan wajib diisi.",
+    "error_load_user": "Gagal memuat profil pengguna. Silakan coba lagi nanti."
   }
 }
